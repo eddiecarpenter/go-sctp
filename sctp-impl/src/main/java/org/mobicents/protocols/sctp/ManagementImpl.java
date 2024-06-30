@@ -1,5 +1,5 @@
 /*
- * TeleStax, Open Source Cloud Communications  Copyright 2012. 
+ * TeleStax, Open Source Cloud Communications  Copyright 2012.
  * and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
@@ -22,6 +22,24 @@
 
 package org.mobicents.protocols.sctp;
 
+import javolution.text.TextBuilder;
+import javolution.util.FastList;
+import javolution.util.FastMap;
+import javolution.xml.XMLObjectReader;
+import javolution.xml.XMLObjectWriter;
+import javolution.xml.stream.XMLStreamException;
+import org.mobicents.protocols.api.Association;
+import org.mobicents.protocols.api.AssociationType;
+import org.mobicents.protocols.api.CongestionListener;
+import org.mobicents.protocols.api.IpChannelType;
+import org.mobicents.protocols.api.Management;
+import org.mobicents.protocols.api.ManagementEventListener;
+import org.mobicents.protocols.api.Server;
+import org.mobicents.protocols.api.ServerListener;
+import org.mobicents.protocols.sctp.netty.NettySctpManagementImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -37,31 +55,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import javolution.text.TextBuilder;
-import javolution.util.FastList;
-import javolution.util.FastMap;
-import javolution.xml.XMLObjectReader;
-import javolution.xml.XMLObjectWriter;
-import javolution.xml.stream.XMLStreamException;
-
-import org.apache.log4j.Logger;
-import org.mobicents.protocols.api.Association;
-import org.mobicents.protocols.api.AssociationType;
-import org.mobicents.protocols.api.CongestionListener;
-import org.mobicents.protocols.api.IpChannelType;
-import org.mobicents.protocols.api.Management;
-import org.mobicents.protocols.api.ManagementEventListener;
-import org.mobicents.protocols.api.Server;
-import org.mobicents.protocols.api.ServerListener;
-import org.mobicents.protocols.sctp.netty.NettySctpManagementImpl;
-
 /**
  * @author amit bhayani
- * 
  */
-public class ManagementImpl implements Management {
+@SuppressWarnings("all")//3rd party lib
+public class ManagementImpl implements Management
+{
 
-	private static final Logger logger = Logger.getLogger(ManagementImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(ManagementImpl.class);
 
 	private static final String SCTP_PERSIST_DIR_KEY = "sctp.persist.dir";
 	private static final String USER_DIR_KEY = "user.dir";
@@ -69,10 +70,10 @@ public class ManagementImpl implements Management {
 
 	private static final String SERVERS = "servers";
 	private static final String ASSOCIATIONS = "associations";
-	
-    private static final String CONNECT_DELAY_PROP = "connectdelay";
-    private static final String SINGLE_THREAD_PROP = "singlethread";
-    private static final String WORKER_THREADS_PROP = "workerthreads";
+
+	private static final String CONNECT_DELAY_PROP = "connectdelay";
+	private static final String SINGLE_THREAD_PROP = "singlethread";
+	private static final String WORKER_THREADS_PROP = "workerthreads";
 
 	private final TextBuilder persistFile = TextBuilder.newInstance();
 
@@ -118,7 +119,8 @@ public class ManagementImpl implements Management {
 
 	private volatile boolean started = false;
 
-	public ManagementImpl(String name) throws IOException {
+	public ManagementImpl(String name) throws IOException
+	{
 		this.name = name;
 		binding.setClassAttribute(CLASS_ATTRIBUTE);
 		binding.setAlias(ServerImpl.class, "server");
@@ -130,73 +132,88 @@ public class ManagementImpl implements Management {
 	/**
 	 * @return the name
 	 */
-	public String getName() {
+	@Override
+	public String getName()
+	{
 		return name;
 	}
 
-	public String getPersistDir() {
+	@Override
+	public String getPersistDir()
+	{
 		return persistDir;
 	}
 
-	public void setPersistDir(String persistDir) {
+	@Override
+	public void setPersistDir(String persistDir)
+	{
 		this.persistDir = persistDir;
 	}
 
 	/**
 	 * @return the connectDelay
 	 */
-	public int getConnectDelay() {
+	@Override
+	public int getConnectDelay()
+	{
 		return connectDelay;
 	}
 
 	/**
-	 * @param connectDelay
-	 *            the connectDelay to set
+	 * @param connectDelay the connectDelay to set
 	 */
-	public void setConnectDelay(int connectDelay) throws Exception {
-        if (!this.started)
-            throw new Exception("ConnectDelay parameter can be updated only when SCTP stack is running");
+	@Override
+	public void setConnectDelay(int connectDelay) throws Exception
+	{
+		if (!this.started) {
+			throw new Exception("ConnectDelay parameter can be updated only when SCTP stack is running");
+		}
 
-        this.connectDelay = connectDelay;
+		this.connectDelay = connectDelay;
 
-        this.store();
+		this.store();
 	}
 
 	/**
 	 * @return the workerThreads
 	 */
-	public int getWorkerThreads() {
+	@Override
+	public int getWorkerThreads()
+	{
 		return workerThreads;
 	}
 
 	/**
-	 * @param workerThreads
-	 *            the workerThreads to set
+	 * @param workerThreads the workerThreads to set
 	 */
-	public void setWorkerThreads(int workerThreads) throws Exception {
-        if (this.started)
-            throw new Exception("WorkerThreads parameter can be updated only when SCTP stack is NOT running");
+	@Override
+	public void setWorkerThreads(int workerThreads) throws Exception
+	{
+		if (this.started) {
+			throw new Exception("WorkerThreads parameter can be updated only when SCTP stack is NOT running");
+		}
 
 		if (workerThreads < 1) {
 			workerThreads = DEFAULT_IO_THREADS;
 		}
 		this.workerThreads = workerThreads;
 
-//		this.store();
+		//		this.store();
 	}
 
 	/**
 	 * @return the maxIOErrors
 	 */
-	public int getMaxIOErrors() {
+	public int getMaxIOErrors()
+	{
 		return maxIOErrors;
 	}
 
 	/**
-	 * @param maxIOErrors
-	 *            the maxIOErrors to set
+	 * @param maxIOErrors the maxIOErrors to set
 	 */
-	public void setMaxIOErrors(int maxIOErrors) {
+	public void setMaxIOErrors(int maxIOErrors)
+	{
 		if (maxIOErrors < 1) {
 			maxIOErrors = 1;
 		}
@@ -206,54 +223,70 @@ public class ManagementImpl implements Management {
 	/**
 	 * @return the singleThread
 	 */
-	public boolean isSingleThread() {
+	@Override
+	public boolean isSingleThread()
+	{
 		return singleThread;
 	}
 
 	/**
-	 * @param singleThread
-	 *            the singleThread to set
+	 * @param singleThread the singleThread to set
 	 */
-	public void setSingleThread(boolean singleThread) throws Exception {
-        if (this.started)
-            throw new Exception("SingleThread parameter can be updated only when SCTP stack is NOT running");
+	@Override
+	public void setSingleThread(boolean singleThread) throws Exception
+	{
+		if (this.started) {
+			throw new Exception("SingleThread parameter can be updated only when SCTP stack is NOT running");
+		}
 
 		this.singleThread = singleThread;
 
-//		this.store();
+		//		this.store();
 	}
 
-    @Override
-    public int getBufferSize() {
-        return bufferSize;
-    }
+	@Override
+	public int getBufferSize()
+	{
+		return bufferSize;
+	}
 
-    @Override
-    public void setBufferSize(int bufferSize) throws Exception {
-        if (this.started)
-            throw new Exception("BufferSize parameter can be updated only when SCTP stack is NOT running");
-        if (bufferSize < 1000 || bufferSize > 1000000)
-            throw new Exception("BufferSize must be between 1000 and 1000000 bytes");
+	@Override
+	public void setBufferSize(int bufferSize) throws Exception
+	{
+		if (this.started) {
+			throw new Exception("BufferSize parameter can be updated only when SCTP stack is NOT running");
+		}
+		if (bufferSize < 1000 || bufferSize > 1000000) {
+			throw new Exception("BufferSize must be between 1000 and 1000000 bytes");
+		}
 
-        this.bufferSize = bufferSize;
-    }
+		this.bufferSize = bufferSize;
+	}
 
-	public ServerListener getServerListener() {
+	@Override
+	public ServerListener getServerListener()
+	{
 		return serverListener;
 	}
 
-	protected FastList<ManagementEventListener> getManagementEventListeners() {
+	protected FastList<ManagementEventListener> getManagementEventListeners()
+	{
 		return managementEventListeners;
 	}
 
-	public void setServerListener(ServerListener serverListener) {
+	@Override
+	public void setServerListener(ServerListener serverListener)
+	{
 		this.serverListener = serverListener;
 	}
 
-	public void addManagementEventListener(ManagementEventListener listener) {
+	@Override
+	public void addManagementEventListener(ManagementEventListener listener)
+	{
 		synchronized (this) {
-			if (this.managementEventListeners.contains(listener))
+			if (this.managementEventListeners.contains(listener)) {
 				return;
+			}
 
 			FastList<ManagementEventListener> newManagementEventListeners = new FastList<ManagementEventListener>();
 			newManagementEventListeners.addAll(this.managementEventListeners);
@@ -262,10 +295,13 @@ public class ManagementImpl implements Management {
 		}
 	}
 
-	public void removeManagementEventListener(ManagementEventListener listener) {
+	@Override
+	public void removeManagementEventListener(ManagementEventListener listener)
+	{
 		synchronized (this) {
-			if (!this.managementEventListeners.contains(listener))
+			if (!this.managementEventListeners.contains(listener)) {
 				return;
+			}
 
 			FastList<ManagementEventListener> newManagementEventListeners = new FastList<ManagementEventListener>();
 			newManagementEventListeners.addAll(this.managementEventListeners);
@@ -274,7 +310,9 @@ public class ManagementImpl implements Management {
 		}
 	}
 
-	public void start() throws Exception {
+	@Override
+	public void start() throws Exception
+	{
 
 		if (this.started) {
 			logger.warn(String.format("management=%s is already started", this.name));
@@ -286,16 +324,18 @@ public class ManagementImpl implements Management {
 
 			if (persistDir != null) {
 				this.persistFile.append(persistDir).append(File.separator).append(this.name).append("_").append(PERSIST_FILE_NAME);
-			} else {
+			}
+			else {
 				persistFile.append(System.getProperty(SCTP_PERSIST_DIR_KEY, System.getProperty(USER_DIR_KEY))).append(File.separator).append(this.name)
-						.append("_").append(PERSIST_FILE_NAME);
+						   .append("_").append(PERSIST_FILE_NAME);
 			}
 
 			logger.info(String.format("SCTP configuration file path %s", persistFile.toString()));
 
 			try {
 				this.load();
-			} catch (FileNotFoundException e) {
+			}
+			catch (FileNotFoundException e) {
 				logger.warn(String.format("Failed to load the SCTP configuration file. \n%s", e.getMessage()));
 			}
 
@@ -315,21 +355,24 @@ public class ManagementImpl implements Management {
 
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("Started SCTP Management=%s WorkerThreads=%d SingleThread=%s", this.name,
-						(this.singleThread ? 0 : this.workerThreads), this.singleThread));
+										  (this.singleThread ? 0 : this.workerThreads), this.singleThread));
 			}
 
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
 					lstr.onServiceStarted();
-				} catch (Throwable ee) {
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onServiceStarted", ee);
 				}
 			}
 		}
 	}
 
-	public void stop() throws Exception {
-		
+	@Override
+	public void stop() throws Exception
+	{
+
 		if (!this.started) {
 			logger.warn(String.format("management=%s is already stopped", this.name));
 			return;
@@ -338,7 +381,8 @@ public class ManagementImpl implements Management {
 		for (ManagementEventListener lstr : managementEventListeners) {
 			try {
 				lstr.onServiceStopped();
-			} catch (Throwable ee) {
+			}
+			catch (Throwable ee) {
 				logger.error("Exception while invoking onServiceStopped", ee);
 			}
 		}
@@ -348,7 +392,7 @@ public class ManagementImpl implements Management {
 
 		// Stop all associations
 		FastMap<String, Association> associationsTemp = this.associations;
-		for (FastMap.Entry<String, Association> n = associationsTemp.head(), end = associationsTemp.tail(); (n = n.getNext()) != end;) {
+		for (FastMap.Entry<String, Association> n = associationsTemp.head(), end = associationsTemp.tail(); (n = n.getNext()) != end; ) {
 			Association associationTemp = n.getValue();
 			if (associationTemp.isStarted()) {
 				((AssociationImpl) associationTemp).stop();
@@ -356,12 +400,13 @@ public class ManagementImpl implements Management {
 		}
 
 		FastList<Server> tempServers = servers;
-		for (FastList.Node<Server> n = tempServers.head(), end = tempServers.tail(); (n = n.getNext()) != end;) {
+		for (FastList.Node<Server> n = tempServers.head(), end = tempServers.tail(); (n = n.getNext()) != end; ) {
 			Server serverTemp = n.getValue();
 			if (serverTemp.isStarted()) {
 				try {
 					((ServerImpl) serverTemp).stop();
-				} catch (Exception e) {
+				}
+				catch (Exception e) {
 					logger.error(String.format("Exception while stopping the Server=%s", serverTemp.getName()), e);
 				}
 			}
@@ -379,15 +424,16 @@ public class ManagementImpl implements Management {
 		// waiting till stopping associations
 		for (int i1 = 0; i1 < 20; i1++) {
 			boolean assConnected = false;
-			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end;) {
+			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end; ) {
 				Association associationTemp = n.getValue();
 				if (associationTemp.isConnected()) {
 					assConnected = true;
 					break;
 				}
 			}
-			if (!assConnected)
+			if (!assConnected) {
 				break;
+			}
 			Thread.sleep(100);
 		}
 
@@ -400,7 +446,8 @@ public class ManagementImpl implements Management {
 					}
 					try {
 						this.executorServices[i].awaitTermination(5000, TimeUnit.MILLISECONDS);
-					} catch (InterruptedException e) {
+					}
+					catch (InterruptedException e) {
 						// Do we care?
 					}
 				}
@@ -409,79 +456,87 @@ public class ManagementImpl implements Management {
 
 		this.started = false;
 	}
-	
-	public boolean isStarted(){
+
+	@Override
+	public boolean isStarted()
+	{
 		return this.started;
 	}
 
 	@SuppressWarnings("unchecked")
-	public void load() throws FileNotFoundException {
+	public void load() throws FileNotFoundException
+	{
 		XMLObjectReader reader = null;
 		try {
 			reader = XMLObjectReader.newInstance(new FileInputStream(persistFile.toString()));
 			reader.setBinding(binding);
 
-            try {
-                Integer vali = reader.read(CONNECT_DELAY_PROP, Integer.class);
-                if (vali != null)
-                    this.connectDelay = vali;
-//                this.workerThreads = reader.read(WORKER_THREADS_PROP, Integer.class);
-//                this.singleThread = reader.read(SINGLE_THREAD_PROP, Boolean.class);
-                vali = reader.read(WORKER_THREADS_PROP, Integer.class);
-                Boolean valb = reader.read(SINGLE_THREAD_PROP, Boolean.class);
+			try {
+				Integer vali = reader.read(CONNECT_DELAY_PROP, Integer.class);
+				if (vali != null) {
+					this.connectDelay = vali;
+				}
+				//                this.workerThreads = reader.read(WORKER_THREADS_PROP, Integer.class);
+				//                this.singleThread = reader.read(SINGLE_THREAD_PROP, Boolean.class);
+				vali = reader.read(WORKER_THREADS_PROP, Integer.class);
+				Boolean valb = reader.read(SINGLE_THREAD_PROP, Boolean.class);
 
-                Double valTH1 = reader.read(NettySctpManagementImpl.CONG_CONTROL_DELAY_THRESHOLD_1, Double.class);
-                Double valTH2 = reader.read(NettySctpManagementImpl.CONG_CONTROL_DELAY_THRESHOLD_2, Double.class);
-                Double valTH3 = reader.read(NettySctpManagementImpl.CONG_CONTROL_DELAY_THRESHOLD_3, Double.class);
-                Double valTB1 = reader
-                        .read(NettySctpManagementImpl.CONG_CONTROL_BACK_TO_NORMAL_DELAY_THRESHOLD_1, Double.class);
-                Double valTB2 = reader
-                        .read(NettySctpManagementImpl.CONG_CONTROL_BACK_TO_NORMAL_DELAY_THRESHOLD_2, Double.class);
-                Double valTB3 = reader
-                        .read(NettySctpManagementImpl.CONG_CONTROL_BACK_TO_NORMAL_DELAY_THRESHOLD_3, Double.class);
+				Double valTH1 = reader.read(NettySctpManagementImpl.CONG_CONTROL_DELAY_THRESHOLD_1, Double.class);
+				Double valTH2 = reader.read(NettySctpManagementImpl.CONG_CONTROL_DELAY_THRESHOLD_2, Double.class);
+				Double valTH3 = reader.read(NettySctpManagementImpl.CONG_CONTROL_DELAY_THRESHOLD_3, Double.class);
+				Double valTB1 = reader
+						.read(NettySctpManagementImpl.CONG_CONTROL_BACK_TO_NORMAL_DELAY_THRESHOLD_1, Double.class);
+				Double valTB2 = reader
+						.read(NettySctpManagementImpl.CONG_CONTROL_BACK_TO_NORMAL_DELAY_THRESHOLD_2, Double.class);
+				Double valTB3 = reader
+						.read(NettySctpManagementImpl.CONG_CONTROL_BACK_TO_NORMAL_DELAY_THRESHOLD_3, Double.class);
 
-                // TODO: revive this test when we introduce of parameters persistense 
-//                Boolean valB = reader.read(NettySctpManagementImpl.OPTION_SCTP_DISABLE_FRAGMENTS, Boolean.class);
-//                Integer valI = reader.read(NettySctpManagementImpl.OPTION_SCTP_FRAGMENT_INTERLEAVE, Integer.class);
-//                Integer valI_In = reader.read(NettySctpManagementImpl.OPTION_SCTP_INIT_MAXSTREAMS_IN, Integer.class);
-//                Integer valI_Out = reader.read(NettySctpManagementImpl.OPTION_SCTP_INIT_MAXSTREAMS_OUT, Integer.class);
-//                valB = reader.read(NettySctpManagementImpl.OPTION_SCTP_NODELAY, Boolean.class);
-//                valI = reader.read(NettySctpManagementImpl.OPTION_SO_SNDBUF, Integer.class);
-//                valI = reader.read(NettySctpManagementImpl.OPTION_SO_RCVBUF, Integer.class);
-//                valI = reader.read(NettySctpManagementImpl.OPTION_SO_LINGER, Integer.class);
+				// TODO: revive this test when we introduce of parameters persistense
+				//                Boolean valB = reader.read(NettySctpManagementImpl.OPTION_SCTP_DISABLE_FRAGMENTS, Boolean.class);
+				//                Integer valI = reader.read(NettySctpManagementImpl.OPTION_SCTP_FRAGMENT_INTERLEAVE, Integer.class);
+				//                Integer valI_In = reader.read(NettySctpManagementImpl.OPTION_SCTP_INIT_MAXSTREAMS_IN, Integer.class);
+				//                Integer valI_Out = reader.read(NettySctpManagementImpl.OPTION_SCTP_INIT_MAXSTREAMS_OUT, Integer.class);
+				//                valB = reader.read(NettySctpManagementImpl.OPTION_SCTP_NODELAY, Boolean.class);
+				//                valI = reader.read(NettySctpManagementImpl.OPTION_SO_SNDBUF, Integer.class);
+				//                valI = reader.read(NettySctpManagementImpl.OPTION_SO_RCVBUF, Integer.class);
+				//                valI = reader.read(NettySctpManagementImpl.OPTION_SO_LINGER, Integer.class);
 
-            } catch (java.lang.NullPointerException npe) {
-                // ignore.
-                // For backward compatibility we can ignore if these values are not defined
-            }			
+			}
+			catch (java.lang.NullPointerException npe) {
+				// ignore.
+				// For backward compatibility we can ignore if these values are not defined
+			}
 
 			this.servers = reader.read(SERVERS, FastList.class);
 
-			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
+			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
 				Server serverTemp = n.getValue();
 				((ServerImpl) serverTemp).setManagement(this);
 				if (serverTemp.isStarted()) {
 					try {
 						((ServerImpl) serverTemp).start();
-					} catch (Exception e) {
+					}
+					catch (Exception e) {
 						logger.error(String.format("Error while initiating Server=%s", serverTemp.getName()), e);
 					}
 				}
 			}
 
 			this.associations = reader.read(ASSOCIATIONS, AssociationMap.class);
-			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end;) {
+			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end; ) {
 				AssociationImpl associationTemp = (AssociationImpl) n.getValue();
 				associationTemp.setManagement(this);
 			}
 
-		} catch (XMLStreamException ex) {
+		}
+		catch (XMLStreamException ex) {
 			// this.logger.info(
 			// "Error while re-creating Linksets from persisted file", ex);
 		}
 	}
 
-	public void store() {
+	public void store()
+	{
 		try {
 			XMLObjectWriter writer = XMLObjectWriter.newInstance(new FileOutputStream(persistFile.toString()));
 			writer.setBinding(binding);
@@ -489,20 +544,23 @@ public class ManagementImpl implements Management {
 			// writer.setReferenceResolver(new XMLReferenceResolver());
 			writer.setIndentation(TAB_INDENT);
 
-            writer.write(this.connectDelay, CONNECT_DELAY_PROP, Integer.class);
-//            writer.write(this.workerThreads, WORKER_THREADS_PROP, Integer.class);
-//            writer.write(this.singleThread, SINGLE_THREAD_PROP, Boolean.class);
+			writer.write(this.connectDelay, CONNECT_DELAY_PROP, Integer.class);
+			//            writer.write(this.workerThreads, WORKER_THREADS_PROP, Integer.class);
+			//            writer.write(this.singleThread, SINGLE_THREAD_PROP, Boolean.class);
 
 			writer.write(this.servers, SERVERS, FastList.class);
 			writer.write(this.associations, ASSOCIATIONS, AssociationMap.class);
 
 			writer.close();
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			logger.error("Error while persisting the Rule state in file", e);
 		}
 	}
 
-	public void removeAllResourses() throws Exception {
+	@Override
+	public void removeAllResourses() throws Exception
+	{
 
 		synchronized (this) {
 			if (!this.started) {
@@ -510,8 +568,10 @@ public class ManagementImpl implements Management {
 			}
 
 			if (this.associations.size() == 0 && this.servers.size() == 0)
-				// no resources allocated - nothing to do
+			// no resources allocated - nothing to do
+			{
 				return;
+			}
 
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("Removing allocated resources: Servers=%d, Associations=%d", this.servers.size(), this.associations.size()));
@@ -520,7 +580,7 @@ public class ManagementImpl implements Management {
 			synchronized (this) {
 				// Remove all associations
 				ArrayList<String> lst = new ArrayList<String>();
-				for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end;) {
+				for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end; ) {
 					lst.add(n.getKey());
 				}
 				for (String n : lst) {
@@ -530,7 +590,7 @@ public class ManagementImpl implements Management {
 
 				// Remove all servers
 				lst.clear();
-				for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
+				for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
 					lst.add(n.getValue().getName());
 				}
 				for (String n : lst) {
@@ -545,23 +605,30 @@ public class ManagementImpl implements Management {
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
 					lstr.onRemoveAllResources();
-				} catch (Throwable ee) {
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onRemoveAllResources", ee);
 				}
 			}
 		}
 	}
 
-	public ServerImpl addServer(String serverName, String hostAddress, int port) throws Exception {
+	@Override
+	public ServerImpl addServer(String serverName, String hostAddress, int port) throws Exception
+	{
 		return addServer(serverName, hostAddress, port, IpChannelType.SCTP, false, 0, null);
 	}
 
-	public Server addServer(String serverName, String hostAddress, int port, IpChannelType ipChannelType, String[] extraHostAddresses) throws Exception {
+	@Override
+	public Server addServer(String serverName, String hostAddress, int port, IpChannelType ipChannelType, String[] extraHostAddresses) throws Exception
+	{
 		return addServer(serverName, hostAddress, port, ipChannelType, false, 0, extraHostAddresses);
 	}
 
+	@Override
 	public ServerImpl addServer(String serverName, String hostAddress, int port, IpChannelType ipChannelType, boolean acceptAnonymousConnections,
-			int maxConcurrentConnectionsCount, String[] extraHostAddresses) throws Exception {
+								int maxConcurrentConnectionsCount, String[] extraHostAddresses) throws Exception
+	{
 
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
@@ -580,7 +647,7 @@ public class ManagementImpl implements Management {
 		}
 
 		synchronized (this) {
-			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
+			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
 				Server serverTemp = n.getValue();
 				if (serverName.equals(serverTemp.getName())) {
 					throw new Exception(String.format("Server name=%s already exist", serverName));
@@ -588,12 +655,12 @@ public class ManagementImpl implements Management {
 
 				if (hostAddress.equals(serverTemp.getHostAddress()) && port == serverTemp.getHostport()) {
 					throw new Exception(String.format("Server name=%s is already bound to %s:%d", serverTemp.getName(), serverTemp.getHostAddress(),
-							serverTemp.getHostport()));
+													  serverTemp.getHostport()));
 				}
 			}
 
 			ServerImpl server = new ServerImpl(serverName, hostAddress, port, ipChannelType, acceptAnonymousConnections, maxConcurrentConnectionsCount,
-					extraHostAddresses);
+											   extraHostAddresses);
 			server.setManagement(this);
 
 			FastList<Server> newServers = new FastList<Server>();
@@ -607,7 +674,8 @@ public class ManagementImpl implements Management {
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
 					lstr.onServerAdded(server);
-				} catch (Throwable ee) {
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onServerAdded", ee);
 				}
 			}
@@ -620,7 +688,9 @@ public class ManagementImpl implements Management {
 		}
 	}
 
-	public void removeServer(String serverName) throws Exception {
+	@Override
+	public void removeServer(String serverName) throws Exception
+	{
 
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
@@ -632,15 +702,15 @@ public class ManagementImpl implements Management {
 
 		synchronized (this) {
 			Server removeServer = null;
-			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
-				ServerImpl serverTemp = (ServerImpl)n.getValue();
+			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
+				ServerImpl serverTemp = (ServerImpl) n.getValue();
 
 				if (serverName.equals(serverTemp.getName())) {
 					if (serverTemp.isStarted()) {
 						throw new Exception(String.format("Server=%s is started. Stop the server before removing", serverName));
 					}
-					
-					if(serverTemp.anonymAssociations.size() !=0 || serverTemp.associations.size() != 0){
+
+					if (serverTemp.anonymAssociations.size() != 0 || serverTemp.associations.size() != 0) {
 						throw new Exception(String.format("Server=%s has Associations. Remove all those Associations before removing Server", serverName));
 					}
 					removeServer = serverTemp;
@@ -663,14 +733,17 @@ public class ManagementImpl implements Management {
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
 					lstr.onServerRemoved(removeServer);
-				} catch (Throwable ee) {
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onServerRemoved", ee);
 				}
 			}
 		}
 	}
 
-	public void startServer(String serverName) throws Exception {
+	@Override
+	public void startServer(String serverName) throws Exception
+	{
 
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
@@ -681,7 +754,7 @@ public class ManagementImpl implements Management {
 		}
 
 		FastList<Server> tempServers = servers;
-		for (FastList.Node<Server> n = tempServers.head(), end = tempServers.tail(); (n = n.getNext()) != end;) {
+		for (FastList.Node<Server> n = tempServers.head(), end = tempServers.tail(); (n = n.getNext()) != end; ) {
 			Server serverTemp = n.getValue();
 
 			if (serverName.equals(serverTemp.getName())) {
@@ -697,7 +770,9 @@ public class ManagementImpl implements Management {
 		throw new Exception(String.format("No Server foubd with name=%s", serverName));
 	}
 
-	public void stopServer(String serverName) throws Exception {
+	@Override
+	public void stopServer(String serverName) throws Exception
+	{
 
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
@@ -708,7 +783,7 @@ public class ManagementImpl implements Management {
 		}
 
 		FastList<Server> tempServers = servers;
-		for (FastList.Node<Server> n = tempServers.head(), end = tempServers.tail(); (n = n.getNext()) != end;) {
+		for (FastList.Node<Server> n = tempServers.head(), end = tempServers.tail(); (n = n.getNext()) != end; ) {
 			Server serverTemp = n.getValue();
 
 			if (serverName.equals(serverTemp.getName())) {
@@ -721,12 +796,16 @@ public class ManagementImpl implements Management {
 		throw new Exception(String.format("No Server found with name=%s", serverName));
 	}
 
-	public AssociationImpl addServerAssociation(String peerAddress, int peerPort, String serverName, String assocName) throws Exception {
+	@Override
+	public AssociationImpl addServerAssociation(String peerAddress, int peerPort, String serverName, String assocName) throws Exception
+	{
 		return addServerAssociation(peerAddress, peerPort, serverName, assocName, IpChannelType.SCTP);
 	}
 
+	@Override
 	public AssociationImpl addServerAssociation(String peerAddress, int peerPort, String serverName, String assocName, IpChannelType ipChannelType)
-			throws Exception {
+	throws Exception
+	{
 
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
@@ -755,7 +834,7 @@ public class ManagementImpl implements Management {
 
 			Server server = null;
 
-			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
+			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
 				Server serverTemp = n.getValue();
 				if (serverTemp.getName().equals(serverName)) {
 					server = serverTemp;
@@ -766,17 +845,18 @@ public class ManagementImpl implements Management {
 				throw new Exception(String.format("No Server found for name=%s", serverName));
 			}
 
-			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end;) {
+			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end; ) {
 				Association associationTemp = n.getValue();
 
 				if (peerAddress.equals(associationTemp.getPeerAddress()) && associationTemp.getPeerPort() == peerPort) {
 					throw new Exception(String.format("Already has association=%s with same peer address=%s and port=%d", associationTemp.getName(),
-							peerAddress, peerPort));
+													  peerAddress, peerPort));
 				}
 			}
 
-			if (server.getIpChannelType() != ipChannelType)
+			if (server.getIpChannelType() != ipChannelType) {
 				throw new Exception(String.format("Server and Accociation has different IP channel type"));
+			}
 
 			AssociationImpl association = new AssociationImpl(peerAddress, peerPort, serverName, assocName, ipChannelType);
 			association.setManagement(this);
@@ -798,7 +878,8 @@ public class ManagementImpl implements Management {
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
 					lstr.onAssociationAdded(association);
-				} catch (Throwable ee) {
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onAssociationAdded", ee);
 				}
 			}
@@ -811,12 +892,16 @@ public class ManagementImpl implements Management {
 		}
 	}
 
-	public AssociationImpl addAssociation(String hostAddress, int hostPort, String peerAddress, int peerPort, String assocName) throws Exception {
+	@Override
+	public AssociationImpl addAssociation(String hostAddress, int hostPort, String peerAddress, int peerPort, String assocName) throws Exception
+	{
 		return addAssociation(hostAddress, hostPort, peerAddress, peerPort, assocName, IpChannelType.SCTP, null);
 	}
 
+	@Override
 	public AssociationImpl addAssociation(String hostAddress, int hostPort, String peerAddress, int peerPort, String assocName, IpChannelType ipChannelType,
-			String[] extraHostAddresses) throws Exception {
+										  String[] extraHostAddresses) throws Exception
+	{
 
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
@@ -843,7 +928,7 @@ public class ManagementImpl implements Management {
 		}
 
 		synchronized (this) {
-			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end;) {
+			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end; ) {
 				Association associationTemp = n.getValue();
 
 				if (assocName.equals(associationTemp.getName())) {
@@ -852,12 +937,12 @@ public class ManagementImpl implements Management {
 
 				if (peerAddress.equals(associationTemp.getPeerAddress()) && associationTemp.getPeerPort() == peerPort) {
 					throw new Exception(String.format("Already has association=%s with same peer address=%s and port=%d", associationTemp.getName(),
-							peerAddress, peerPort));
+													  peerAddress, peerPort));
 				}
 
 				if (hostAddress.equals(associationTemp.getHostAddress()) && associationTemp.getHostPort() == hostPort) {
 					throw new Exception(String.format("Already has association=%s with same host address=%s and port=%d", associationTemp.getName(),
-							hostAddress, hostPort));
+													  hostAddress, hostPort));
 				}
 
 			}
@@ -876,7 +961,8 @@ public class ManagementImpl implements Management {
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
 					lstr.onAssociationAdded(association);
-				} catch (Throwable ee) {
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onAssociationAdded", ee);
 				}
 			}
@@ -889,7 +975,9 @@ public class ManagementImpl implements Management {
 		}
 	}
 
-	public Association getAssociation(String assocName) throws Exception {
+	@Override
+	public Association getAssociation(String assocName) throws Exception
+	{
 		if (assocName == null) {
 			throw new Exception("Association name cannot be null");
 		}
@@ -904,13 +992,17 @@ public class ManagementImpl implements Management {
 	/**
 	 * @return the associations
 	 */
-	public Map<String, Association> getAssociations() {
+	@Override
+	public Map<String, Association> getAssociations()
+	{
 		Map<String, Association> routeTmp = new HashMap<String, Association>();
 		routeTmp.putAll(this.associations);
 		return routeTmp;
 	}
 
-	public void startAssociation(String assocName) throws Exception {
+	@Override
+	public void startAssociation(String assocName) throws Exception
+	{
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
 		}
@@ -933,7 +1025,9 @@ public class ManagementImpl implements Management {
 		this.store();
 	}
 
-	public void stopAssociation(String assocName) throws Exception {
+	@Override
+	public void stopAssociation(String assocName) throws Exception
+	{
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
 		}
@@ -952,7 +1046,9 @@ public class ManagementImpl implements Management {
 		this.store();
 	}
 
-	public void removeAssociation(String assocName) throws Exception {
+	@Override
+	public void removeAssociation(String assocName) throws Exception
+	{
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
 		}
@@ -979,7 +1075,7 @@ public class ManagementImpl implements Management {
 			// this.associations.remove(assocName);
 
 			if (((AssociationImpl) association).getAssociationType() == AssociationType.SERVER) {
-				for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
+				for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
 					Server serverTemp = n.getValue();
 					if (serverTemp.getName().equals(association.getServerName())) {
 						FastList<String> newAssociations2 = new FastList<String>();
@@ -999,7 +1095,8 @@ public class ManagementImpl implements Management {
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
 					lstr.onAssociationRemoved(association);
-				} catch (Throwable ee) {
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onAssociationRemoved", ee);
 				}
 			}
@@ -1009,25 +1106,30 @@ public class ManagementImpl implements Management {
 	/**
 	 * @return the servers
 	 */
-	public List<Server> getServers() {
+	@Override
+	public List<Server> getServers()
+	{
 		return servers.unmodifiable();
 	}
 
 	/**
 	 * @return the pendingChanges
 	 */
-	protected FastList<ChangeRequest> getPendingChanges() {
+	protected FastList<ChangeRequest> getPendingChanges()
+	{
 		return pendingChanges;
 	}
 
 	/**
 	 * @return the socketSelector
 	 */
-	protected Selector getSocketSelector() {
+	protected Selector getSocketSelector()
+	{
 		return socketSelector;
 	}
 
-	protected void populateWorkerThread(int workerThreadTable[]) {
+	protected void populateWorkerThread(int workerThreadTable[])
+	{
 		for (int count = 0; count < workerThreadTable.length; count++) {
 			if (this.workerThreadCount == this.workerThreads) {
 				this.workerThreadCount = 0;
@@ -1038,193 +1140,225 @@ public class ManagementImpl implements Management {
 		}
 	}
 
-	protected ExecutorService getExecutorService(int index) {
+	protected ExecutorService getExecutorService(int index)
+	{
 		return this.executorServices[index];
 	}
 
-    @Override
-    public double getCongControl_DelayThreshold_1() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+	@Override
+	public double getCongControl_DelayThreshold_1()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
-    @Override
-    public double getCongControl_DelayThreshold_2() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+	@Override
+	public double getCongControl_DelayThreshold_2()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
-    @Override
-    public double getCongControl_DelayThreshold_3() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+	@Override
+	public double getCongControl_DelayThreshold_3()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
-    @Override
-    public void setCongControl_DelayThreshold_1(double val) throws Exception {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public void setCongControl_DelayThreshold_1(double val) throws Exception
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public void setCongControl_DelayThreshold_2(double val) throws Exception {
-        // TODO Auto-generated method stub
-        
-    }
+	}
 
-    @Override
-    public void setCongControl_DelayThreshold_3(double val) throws Exception {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public void setCongControl_DelayThreshold_2(double val) throws Exception
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public double getCongControl_BackToNormalDelayThreshold_1() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+	}
 
-    @Override
-    public double getCongControl_BackToNormalDelayThreshold_2() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+	@Override
+	public void setCongControl_DelayThreshold_3(double val) throws Exception
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public double getCongControl_BackToNormalDelayThreshold_3() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+	}
 
-    @Override
-    public void setCongControl_BackToNormalDelayThreshold_1(double val) throws Exception {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public double getCongControl_BackToNormalDelayThreshold_1()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
-    @Override
-    public void setCongControl_BackToNormalDelayThreshold_2(double val) throws Exception {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public double getCongControl_BackToNormalDelayThreshold_2()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
-    @Override
-    public void setCongControl_BackToNormalDelayThreshold_3(double val) throws Exception {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public double getCongControl_BackToNormalDelayThreshold_3()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
-    @Override
-    public Boolean getOptionSctpDisableFragments() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	@Override
+	public void setCongControl_BackToNormalDelayThreshold_1(double val) throws Exception
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public void setOptionSctpDisableFragments(Boolean optionSctpDisableFragments) {
-        // TODO Auto-generated method stub
-        
-    }
+	}
 
-    @Override
-    public Integer getOptionSctpFragmentInterleave() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	@Override
+	public void setCongControl_BackToNormalDelayThreshold_2(double val) throws Exception
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public void setOptionSctpFragmentInterleave(Integer optionSctpFragmentInterleave) {
-        // TODO Auto-generated method stub
-        
-    }
+	}
 
-    @Override
-    public Boolean getOptionSctpNodelay() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	@Override
+	public void setCongControl_BackToNormalDelayThreshold_3(double val) throws Exception
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public void setOptionSctpNodelay(Boolean optionSctpNodelay) {
-        // TODO Auto-generated method stub
-        
-    }
+	}
 
-    @Override
-    public Integer getOptionSoSndbuf() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	@Override
+	public Boolean getOptionSctpDisableFragments()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public void setOptionSoSndbuf(Integer optionSoSndbuf) {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public void setOptionSctpDisableFragments(Boolean optionSctpDisableFragments)
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public Integer getOptionSoRcvbuf() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	}
 
-    @Override
-    public void setOptionSoRcvbuf(Integer optionSoRcvbuf) {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public Integer getOptionSctpFragmentInterleave()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public Integer getOptionSoLinger() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	@Override
+	public void setOptionSctpFragmentInterleave(Integer optionSctpFragmentInterleave)
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public void setOptionSoLinger(Integer optionSoLinger) {
-        // TODO Auto-generated method stub
-        
-    }
+	}
 
-    @Override
-    public Integer getOptionSctpInitMaxstreams_MaxOutStreams() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	@Override
+	public Boolean getOptionSctpNodelay()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public Integer getOptionSctpInitMaxstreams_MaxInStreams() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	@Override
+	public void setOptionSctpNodelay(Boolean optionSctpNodelay)
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public void setOptionSctpInitMaxstreams_MaxOutStreams(Integer maxOutStreams) {
-        // TODO Auto-generated method stub
-        
-    }
+	}
 
-    @Override
-    public void setOptionSctpInitMaxstreams_MaxInStreams(Integer maxInStreams) {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public Integer getOptionSoSndbuf()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public void addCongestionListener(CongestionListener listener) {
-        // TODO Auto-generated method stub
-        
-    }
+	@Override
+	public void setOptionSoSndbuf(Integer optionSoSndbuf)
+	{
+		// TODO Auto-generated method stub
 
-    @Override
-    public void removeCongestionListener(CongestionListener listener) {
-        // TODO Auto-generated method stub
-        
-    }
+	}
+
+	@Override
+	public Integer getOptionSoRcvbuf()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setOptionSoRcvbuf(Integer optionSoRcvbuf)
+	{
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public Integer getOptionSoLinger()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setOptionSoLinger(Integer optionSoLinger)
+	{
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public Integer getOptionSctpInitMaxstreams_MaxOutStreams()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer getOptionSctpInitMaxstreams_MaxInStreams()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setOptionSctpInitMaxstreams_MaxOutStreams(Integer maxOutStreams)
+	{
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setOptionSctpInitMaxstreams_MaxInStreams(Integer maxInStreams)
+	{
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void addCongestionListener(CongestionListener listener)
+	{
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void removeCongestionListener(CongestionListener listener)
+	{
+		// TODO Auto-generated method stub
+
+	}
 
 	@Override
 	public void modifyServer(String serverName, String hostAddress, Integer port, IpChannelType ipChannelType, Boolean acceptAnonymousConnections, Integer maxConcurrentConnectionsCount, String[] extraHostAddresses)
-			throws Exception {
+	throws Exception
+	{
 
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s MUST be started", this.name));
@@ -1234,14 +1368,14 @@ public class ManagementImpl implements Management {
 			throw new Exception("Server name cannot be null");
 		}
 
-		if (port !=null && (port < 1 || port > 65535)) {
+		if (port != null && (port < 1 || port > 65535)) {
 			throw new Exception("Server host port cannot be less than 1 or more than 65535. But was : " + port);
 		}
 
 		synchronized (this) {
 			Server modifyServer = null;
-			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
-				ServerImpl currServer = (ServerImpl)n.getValue();
+			for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
+				ServerImpl currServer = (ServerImpl) n.getValue();
 
 				if (serverName.equals(currServer.getName())) {
 
@@ -1249,18 +1383,24 @@ public class ManagementImpl implements Management {
 						throw new Exception(String.format("Server=%s is started. Stop the server before modifying", serverName));
 					}
 
-					if(hostAddress != null)
+					if (hostAddress != null) {
 						currServer.setHostAddress(hostAddress);
-					if(port != null)
+					}
+					if (port != null) {
 						currServer.setHostport(port);
-					if(ipChannelType != null)
+					}
+					if (ipChannelType != null) {
 						currServer.setIpChannelType(ipChannelType);
-					if(acceptAnonymousConnections != null)
+					}
+					if (acceptAnonymousConnections != null) {
 						currServer.setAcceptAnonymousConnections(acceptAnonymousConnections);
-					if(maxConcurrentConnectionsCount != null)
+					}
+					if (maxConcurrentConnectionsCount != null) {
 						currServer.setMaxConcurrentConnectionsCount(maxConcurrentConnectionsCount);
-					if(extraHostAddresses!=null)
+					}
+					if (extraHostAddresses != null) {
 						currServer.setExtraHostAddresses(extraHostAddresses);
+					}
 
 					modifyServer = currServer;
 					break;
@@ -1276,7 +1416,8 @@ public class ManagementImpl implements Management {
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
 					lstr.onServerModified(modifyServer);
-				} catch (Throwable ee) {
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onServerModified", ee);
 				}
 			}
@@ -1285,7 +1426,8 @@ public class ManagementImpl implements Management {
 	}
 
 	@Override
-	public void modifyServerAssociation(String assocName, String peerAddress, Integer peerPort, String serverName, IpChannelType ipChannelType)	throws Exception {
+	public void modifyServerAssociation(String assocName, String peerAddress, Integer peerPort, String serverName, IpChannelType ipChannelType) throws Exception
+	{
 		if (!this.started) {
 			throw new Exception(String.format("Management=%s not started", this.name));
 		}
@@ -1305,25 +1447,26 @@ public class ManagementImpl implements Management {
 				throw new Exception(String.format("No Association found for name=%s", assocName));
 			}
 
-			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end;) {
+			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end; ) {
 				Association associationTemp = n.getValue();
 
 				if (peerAddress != null && peerAddress.equals(associationTemp.getPeerAddress()) && associationTemp.getPeerPort() == peerPort) {
 					throw new Exception(String.format("Already has association=%s with same peer address=%s and port=%d", associationTemp.getName(),
-							peerAddress, peerPort));
+													  peerAddress, peerPort));
 				}
 			}
 
-			if(peerAddress!=null)
+			if (peerAddress != null) {
 				association.setPeerAddress(peerAddress);
-			if(peerPort!= null)
+			}
+			if (peerPort != null) {
 				association.setPeerPort(peerPort);
+			}
 
-			if(serverName!=null && !serverName.equals(association.getServerName()))
-			{
+			if (serverName != null && !serverName.equals(association.getServerName())) {
 				Server newServer = null;
 
-				for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
+				for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
 					Server serverTemp = n.getValue();
 					if (serverTemp.getName().equals(serverName)) {
 						newServer = serverTemp;
@@ -1334,11 +1477,12 @@ public class ManagementImpl implements Management {
 					throw new Exception(String.format("No Server found for name=%s", serverName));
 				}
 
-				if ((ipChannelType!=null && newServer.getIpChannelType() != ipChannelType)||(ipChannelType==null && newServer.getIpChannelType() != association.getIpChannelType()))
+				if ((ipChannelType != null && newServer.getIpChannelType() != ipChannelType) || (ipChannelType == null && newServer.getIpChannelType() != association.getIpChannelType())) {
 					throw new Exception(String.format("Server and Accociation has different IP channel type"));
+				}
 
 				//remove association from current server
-				for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
+				for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
 					Server serverTemp = n.getValue();
 					if (serverTemp.getName().equals(association.getServerName())) {
 						FastList<String> newAssociations2 = new FastList<String>();
@@ -1357,15 +1501,14 @@ public class ManagementImpl implements Management {
 
 				association.setServerName(serverName);
 			}
-			else
-			{
-				if(ipChannelType!=null)
-				{
-					for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end;) {
+			else {
+				if (ipChannelType != null) {
+					for (FastList.Node<Server> n = this.servers.head(), end = this.servers.tail(); (n = n.getNext()) != end; ) {
 						Server serverTemp = n.getValue();
 						if (serverTemp.getName().equals(association.getServerName())) {
-							if (serverTemp.getIpChannelType() != ipChannelType)
+							if (serverTemp.getIpChannelType() != ipChannelType) {
 								throw new Exception(String.format("Server and Accociation has different IP channel type"));
+							}
 						}
 					}
 
@@ -1378,8 +1521,9 @@ public class ManagementImpl implements Management {
 
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
-					lstr.onAssociationModified((Association)association);
-				} catch (Throwable ee) {
+					lstr.onAssociationModified((Association) association);
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onAssociationModified", ee);
 				}
 			}
@@ -1387,7 +1531,8 @@ public class ManagementImpl implements Management {
 	}
 
 	@Override
-	public void modifyAssociation(String hostAddress, Integer hostPort, String peerAddress, Integer peerPort, String assocName,	IpChannelType ipChannelType, String[] extraHostAddresses) throws Exception {
+	public void modifyAssociation(String hostAddress, Integer hostPort, String peerAddress, Integer peerPort, String assocName, IpChannelType ipChannelType, String[] extraHostAddresses) throws Exception
+	{
 
 		boolean isModified = false;
 		if (!this.started) {
@@ -1406,61 +1551,54 @@ public class ManagementImpl implements Management {
 			throw new Exception("Association name cannot be null");
 		}
 		synchronized (this) {
-			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end;) {
+			for (FastMap.Entry<String, Association> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end; ) {
 				Association associationTemp = n.getValue();
 
-				if (peerAddress !=null && peerAddress.equals(associationTemp.getPeerAddress()) && associationTemp.getPeerPort() == peerPort) {
+				if (peerAddress != null && peerAddress.equals(associationTemp.getPeerAddress()) && associationTemp.getPeerPort() == peerPort) {
 					throw new Exception(String.format("Already has association=%s with same peer address=%s and port=%d", associationTemp.getName(),
-							peerAddress, peerPort));
+													  peerAddress, peerPort));
 				}
 
-				if (hostAddress !=null && hostAddress.equals(associationTemp.getHostAddress()) && associationTemp.getHostPort() == hostPort) {
+				if (hostAddress != null && hostAddress.equals(associationTemp.getHostAddress()) && associationTemp.getHostPort() == hostPort) {
 					throw new Exception(String.format("Already has association=%s with same host address=%s and port=%d", associationTemp.getName(),
-							hostAddress, hostPort));
+													  hostAddress, hostPort));
 				}
 
 			}
 
 			AssociationImpl association = (AssociationImpl) this.associations.get(assocName);
 
-			if(hostAddress!=null)
-			{
+			if (hostAddress != null) {
 				association.setHostAddress(hostAddress);
 				isModified = true;
 			}
 
-			if(hostPort!= null)
-			{
+			if (hostPort != null) {
 				association.setHostPort(hostPort);
 				isModified = true;
 			}
 
-			if(peerAddress!=null)
-			{
+			if (peerAddress != null) {
 				association.setPeerAddress(peerAddress);
 				isModified = true;
 			}
 
-			if(peerPort!= null)
-			{
+			if (peerPort != null) {
 				association.setPeerPort(peerPort);
 				isModified = true;
 			}
 
-			if(ipChannelType!=null)
-			{
+			if (ipChannelType != null) {
 				association.setIpChannelType(ipChannelType);
 				isModified = true;
 			}
 
-			if(extraHostAddresses!=null)
-			{
+			if (extraHostAddresses != null) {
 				association.setExtraHostAddresses(extraHostAddresses);
 				isModified = true;
 			}
 
-			if(association.isConnected() && isModified)
-			{
+			if (association.isConnected() && isModified) {
 				association.stop();
 				association.start();
 			}
@@ -1469,8 +1607,9 @@ public class ManagementImpl implements Management {
 
 			for (ManagementEventListener lstr : managementEventListeners) {
 				try {
-					lstr.onAssociationModified((Association)association);
-				} catch (Throwable ee) {
+					lstr.onAssociationModified((Association) association);
+				}
+				catch (Throwable ee) {
 					logger.error("Exception while invoking onAssociationModified", ee);
 				}
 			}

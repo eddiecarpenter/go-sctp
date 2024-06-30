@@ -1,278 +1,147 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.mobicents</groupId>
-		<artifactId>restcomm-parent</artifactId>
-		<version>2.27.32</version>
-	</parent>
+    <groupId>io.go.protocols.sctp</groupId>
+    <artifactId>sctp-parent</artifactId>
+    <version>3.0.0</version>
+    <name>Go :: SCTP :: Parent :: ${project.artifactId}</name>
+    <packaging>pom</packaging>
 
-	<groupId>org.mobicents.protocols.sctp</groupId>
-	<artifactId>sctp-parent</artifactId>
-	<version>2.0.0-SNAPSHOT</version>
-	<name>Restcomm :: SCTP :: Parent :: ${pom.artifactId}</name>
-	<packaging>pom</packaging>
+    <properties>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
+        <commons-pool.version>1.6</commons-pool.version>
+        <junit.version>4.13.2</junit.version>
+        <slf4j.version>2.0.7</slf4j.version>
+        <netty.version>4.1.108.Final</netty.version>
+        <jakarta.version>4.0.1</jakarta.version>
+        <surefire.version>3.2.5</surefire.version>
+        <jandex.version>3.1.2</jandex.version>
+        <javolution.version>5.5.1</javolution.version>
+        <testng.version>7.7.0</testng.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+        <maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
+    </properties>
 
-	<properties>
-		<log4j.version>1.2.8</log4j.version>
-		<javolution.version>5.5.1</javolution.version>
-		<commons.version>1.0.0.CR1</commons.version>
-		<testng.version>6.2</testng.version>
-		<netty.version>4.0.33.Final</netty.version>
-		<compiler.plugin.version>2.0.2</compiler.plugin.version>
-		<compile.source>1.7</compile.source>
+    <modules>
+        <module>sctp-api</module>
+        <module>sctp-impl</module>
+    </modules>
 
-	</properties>
-	<modules>
-		<module>sctp-api</module>
-		<module>sctp-impl</module>
-	</modules>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.mobicents.commons</groupId>
-				<artifactId>commons</artifactId>
-				<version>${commons.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>log4j</groupId>
-				<artifactId>log4j</artifactId>
-				<version>${log4j.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>${junit.version}</version>
-				<scope>provided</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
-	<profiles>
-		<profile>
-			<id>maven-release</id>
-			<modules>
-				<module>docs</module>
-				<module>release</module>
-			</modules>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-release-plugin</artifactId>
-						<configuration>
-							<allowTimestampedSnapshots>true</allowTimestampedSnapshots>
-							<preparationGoals>clean install</preparationGoals>
-							<autoVersionSubmodules>true</autoVersionSubmodules>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>release</id>
-			<modules>
-				<module>docs</module>
-				<module>release</module>
-			</modules>
-		</profile>
-		<profile>
-			<id>release-sign-artifacts</id>
-			<activation>
-				<property>
-					<name>performRelease</name>
-					<value>true</value>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>install</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-source-plugin</artifactId>
-						<version>2.1.2</version>
-						<executions>
-							<execution>
-								<id>attach-sources</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
-	<developers>
-		<developer>
-			<id>serg.vetyutnev</id>
-			<name>Sergey</name>
-			<email>serg.vetyutnev@gmail.com</email>
-			<organization>TeleStax</organization>
-			<organizationUrl>http://telestax.com/</organizationUrl>
-			<roles>
-				<role>Active Developer</role>
-			</roles>
-			<timezone>+3</timezone>
-		</developer>
-		<developer>
-			<id>amit.bhayani</id>
-			<name>Amit Bhayani</name>
-			<email>amit.bhayani@gmail.com</email>
-			<organization>TeleStax</organization>
-			<organizationUrl>http://telestax.com/</organizationUrl>
-			<roles>
-				<role>Active Developer</role>
-			</roles>
-			<timezone>+5.5</timezone>
-		</developer>
-	</developers>
-	<licenses>
-		<license>
-			<name>GNU LESSER GENERAL PUBLIC LICENSE</name>
-			<url>http://www.gnu.org/licenses/lgpl.html</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<groupId>org.mobicents.tools</groupId>
-				<version>
-					${restcomm.tools.mavenplugin.eclipse.version}
-				</version>
-				<inherited>false</inherited>
-				<executions />
-				<configuration>
-					<classpathExcludes>
-						<exclude>xml-apis:xml-apis</exclude>
-						<exclude>jtidy:jtidy</exclude>
-					</classpathExcludes>
-					<resolveTransitiveDependencies>
-						true
-					</resolveTransitiveDependencies>
-					<eclipseProjectName>
-						sctp
-					</eclipseProjectName>
-				</configuration>
-			</plugin>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+            </plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>${compiler.plugin.version}</version>
-				<configuration>
-					<source>${compile.source}</source>
-					<target>${compile.source}</target>
-					<debug>${compile.debug}</debug>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-		</plugins>
-	</build>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
-	<scm>
-		<connection>scm:git:https://github.com/RestComm/sctp.git</connection>
-		<developerConnection>scm:git:git@github.com:RestComm/sctp.git</developerConnection>
-		<url>https://github.com/RestComm/sctp</url>
-	</scm>
-	<!-- repositories -->
-	<repositories>
-		<repository>
-			<id>restcomm-public-repository-group</id>
-			<name>Restcomm Public Maven Repository Group</name>
-			<url>https://oss.sonatype.org/content/groups/public/</url>
-			<layout>default</layout>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>jboss-public-repository-group</id>
-			<name>JBoss Public Maven Repository Group</name>
-			<url>http://repository.jboss.org/nexus/content/groups/public/</url>
-			<layout>default</layout>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>jboss-3rd-party-repository-group</id>
-			<name>JBoss ThirdParty Releases Repository Group</name>
-			<url>http://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
-			<layout>default</layout>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>jboss-3rd-party-upload-repository-group</id>
-			<name>JBoss ThirdParty Upload Repository Group</name>
-			<url>http://repository.jboss.org/nexus/content/repositories/thirdparty-upload</url>
-			<layout>default</layout>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>java.net-Public</id>
-			<name>Maven Java Net Snapshots and Releases</name>
-			<url>http://download.java.net/maven/2/</url>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>backup.repository.jboss.org</id>
-			<name>JBoss Repository Backup</name>
-			<url>http://anonsvn.jboss.org/repos/repository.jboss.org/maven2/</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-	</repositories>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <repositories>
+                <repository>
+                    <id>Nexus</id>
+                    <name>Nexus Group</name>
+                    <url>https://nexus.frei.dev/repository/maven-public/</url>
+                    <layout>default</layout>
+                </repository>
+
+                <repository>
+                    <id>repo</id>
+                    <name>Dev Repo</name>
+                    <url>http://localhost:8046/artifactory/releaserepo/</url>
+                    <layout>default</layout>
+                </repository>
+            </repositories>
+
+            <distributionManagement>
+                <repository>
+                    <id>repo</id>
+                    <name>Release Repo</name>
+                    <url>http://localhost:8046/artifactory/releaserepo/</url>
+                </repository>
+            </distributionManagement>
+        </profile>
+
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <repositories>
+                <repository>
+                    <id>central</id>
+                    <name>Maven Central</name>
+                    <url>https://repo1.maven.org/maven2/</url>
+                    <layout>default</layout>
+                </repository>
+
+                <repository>
+                    <id>devrepo</id>
+                    <name>Dev Repo</name>
+                    <url>http://localhost:8046/artifactory/devrepo/</url>
+                    <layout>default</layout>
+                </repository>
+            </repositories>
+
+            <distributionManagement>
+                <repository>
+                    <id>devrepo</id>
+                    <name>Dev Repo</name>
+                    <url>http://localhost:8046/artifactory/devrepo/</url>
+                    <layout>default</layout>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 </project>

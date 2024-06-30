@@ -26,23 +26,26 @@ import io.netty.handler.codec.sctp.SctpMessageCompletionHandler;
 
 /**
  * @author <a href="mailto:amit.bhayani@telestax.com">Amit Bhayani</a>
- * 
  */
-public class NettySctpClientChannelInitializer extends ChannelInitializer<SctpChannel> {
+@SuppressWarnings("all")//3rd party lib
+public class NettySctpClientChannelInitializer extends ChannelInitializer<SctpChannel>
+{
 
-    private final NettyAssociationImpl nettyAssociationImpl;
+	private final NettyAssociationImpl nettyAssociationImpl;
 
-    /**
-     * @param nettyAssociationImpl
-     */
-    public NettySctpClientChannelInitializer(NettyAssociationImpl nettyAssociationImpl) {
-        super();
-        this.nettyAssociationImpl = nettyAssociationImpl;
-    }
+	/**
+	 * @param nettyAssociationImpl
+	 */
+	public NettySctpClientChannelInitializer(NettyAssociationImpl nettyAssociationImpl)
+	{
+		super();
+		this.nettyAssociationImpl = nettyAssociationImpl;
+	}
 
-    @Override
-    protected void initChannel(SctpChannel ch) throws Exception {
-        ch.pipeline().addLast(new SctpMessageCompletionHandler(), new NettySctpClientHandler(this.nettyAssociationImpl));
+	@Override
+	protected void initChannel(SctpChannel ch) throws Exception
+	{
+		ch.pipeline().addLast(new SctpMessageCompletionHandler(), new NettySctpClientHandler(this.nettyAssociationImpl));
 
-    }
+	}
 }

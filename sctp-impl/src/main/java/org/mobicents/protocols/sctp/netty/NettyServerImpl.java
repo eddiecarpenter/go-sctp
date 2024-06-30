@@ -30,411 +30,446 @@ import io.netty.channel.sctp.nio.NioSctpServerChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import javolution.util.FastList;
+import javolution.xml.XMLFormat;
+import javolution.xml.stream.XMLStreamException;
+import org.mobicents.protocols.api.Association;
+import org.mobicents.protocols.api.IpChannelType;
+import org.mobicents.protocols.api.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 
-import javolution.util.FastList;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
-
-import org.apache.log4j.Logger;
-import org.mobicents.protocols.api.Association;
-import org.mobicents.protocols.api.IpChannelType;
-import org.mobicents.protocols.api.Server;
-
 /**
  * @author <a href="mailto:amit.bhayani@telestax.com">Amit Bhayani</a>
- * 
  */
-public class NettyServerImpl implements Server {
+@SuppressWarnings("all")//3rd party lib
+public class NettyServerImpl implements Server
+{
 
-    private static final Logger logger = Logger.getLogger(NettyServerImpl.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(NettyServerImpl.class.getName());
 
-    private static final String COMMA = ", ";
-    private static final String NAME = "name";
-    private static final String HOST_ADDRESS = "hostAddress";
-    private static final String HOST_PORT = "hostPort";
-    private static final String IPCHANNEL_TYPE = "ipChannelType";
+	private static final String COMMA = ", ";
+	private static final String NAME = "name";
+	private static final String HOST_ADDRESS = "hostAddress";
+	private static final String HOST_PORT = "hostPort";
+	private static final String IPCHANNEL_TYPE = "ipChannelType";
 
-    private static final String ASSOCIATIONS = "associations";
-    private static final String EXTRA_HOST_ADDRESS = "extraHostAddress";
-    private static final String ACCEPT_ANONYMOUS_CONNECTIONS = "acceptAnonymousConnections";
-    private static final String MAX_CONCURRENT_CONNECTIONS_COUNT = "maxConcurrentConnectionsCount";
+	private static final String ASSOCIATIONS = "associations";
+	private static final String EXTRA_HOST_ADDRESS = "extraHostAddress";
+	private static final String ACCEPT_ANONYMOUS_CONNECTIONS = "acceptAnonymousConnections";
+	private static final String MAX_CONCURRENT_CONNECTIONS_COUNT = "maxConcurrentConnectionsCount";
 
-    private static final String STARTED = "started";
+	private static final String STARTED = "started";
 
-    private static final String EXTRA_HOST_ADDRESS_SIZE = "extraHostAddresseSize";
+	private static final String EXTRA_HOST_ADDRESS_SIZE = "extraHostAddresseSize";
 
-    private String name;
-    private String hostAddress;
-    private int hostport;
-    private volatile boolean started = false;
-    private IpChannelType ipChannelType;
-    private boolean acceptAnonymousConnections;
-    private int maxConcurrentConnectionsCount;
-    private String[] extraHostAddresses;
+	private String name;
+	private String hostAddress;
+	private int hostport;
+	private volatile boolean started = false;
+	private IpChannelType ipChannelType;
+	private boolean acceptAnonymousConnections;
+	private int maxConcurrentConnectionsCount;
+	private String[] extraHostAddresses;
 
-    private NettySctpManagementImpl management = null;
+	private NettySctpManagementImpl management = null;
 
-    protected FastList<String> associations = new FastList<String>();
-    protected FastList<Association> anonymAssociations = new FastList<Association>();
+	protected FastList<String> associations = new FastList<String>();
+	protected FastList<Association> anonymAssociations = new FastList<Association>();
 
-    // Netty declarations
-    // The channel on which we'll accept connections
-    private SctpServerChannel serverChannelSctp;
-    private NioServerSocketChannel serverChannelTcp;
+	// Netty declarations
+	// The channel on which we'll accept connections
+	private SctpServerChannel serverChannelSctp;
+	private NioServerSocketChannel serverChannelTcp;
 
-    /**
-     * 
-     */
-    public NettyServerImpl() {
-        super();
-    }
+	/**
+	 *
+	 */
+	public NettyServerImpl()
+	{
+		super();
+	}
 
-    /**
-     * @param name
-     * @param ip
-     * @param port
-     * @throws IOException
-     */
-    public NettyServerImpl(String name, String hostAddress, int hostport, IpChannelType ipChannelType,
-            boolean acceptAnonymousConnections, int maxConcurrentConnectionsCount, String[] extraHostAddresses)
-            throws IOException {
-        super();
-        this.name = name;
-        this.hostAddress = hostAddress;
-        this.hostport = hostport;
-        this.ipChannelType = ipChannelType;
-        this.acceptAnonymousConnections = acceptAnonymousConnections;
-        this.maxConcurrentConnectionsCount = maxConcurrentConnectionsCount;
-        this.extraHostAddresses = extraHostAddresses;
-    }
+	/**
+	 * @param name
+	 * @param ip
+	 * @param port
+	 *
+	 * @throws IOException
+	 */
+	public NettyServerImpl(String name, String hostAddress, int hostport, IpChannelType ipChannelType,
+						   boolean acceptAnonymousConnections, int maxConcurrentConnectionsCount, String[] extraHostAddresses)
+	throws IOException
+	{
+		super();
+		this.name = name;
+		this.hostAddress = hostAddress;
+		this.hostport = hostport;
+		this.ipChannelType = ipChannelType;
+		this.acceptAnonymousConnections = acceptAnonymousConnections;
+		this.maxConcurrentConnectionsCount = maxConcurrentConnectionsCount;
+		this.extraHostAddresses = extraHostAddresses;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#getIpChannelType()
-     */
-    @Override
-    public IpChannelType getIpChannelType() {
-        return this.ipChannelType;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#getIpChannelType()
+	 */
+	@Override
+	public IpChannelType getIpChannelType()
+	{
+		return this.ipChannelType;
+	}
 
-    public void setIpChannelType(IpChannelType ipChannelType) {
-        this.ipChannelType = ipChannelType;
-    }
+	public void setIpChannelType(IpChannelType ipChannelType)
+	{
+		this.ipChannelType = ipChannelType;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#isAcceptAnonymousConnections()
-     */
-    @Override
-    public boolean isAcceptAnonymousConnections() {
-        return acceptAnonymousConnections;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#isAcceptAnonymousConnections()
+	 */
+	@Override
+	public boolean isAcceptAnonymousConnections()
+	{
+		return acceptAnonymousConnections;
+	}
 
-    public void setAcceptAnonymousConnections(Boolean acceptAnonymousConnections) {
-        this.acceptAnonymousConnections = acceptAnonymousConnections;
-    }
+	public void setAcceptAnonymousConnections(Boolean acceptAnonymousConnections)
+	{
+		this.acceptAnonymousConnections = acceptAnonymousConnections;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#getMaxConcurrentConnectionsCount()
-     */
-    @Override
-    public int getMaxConcurrentConnectionsCount() {
-        return this.maxConcurrentConnectionsCount;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#getMaxConcurrentConnectionsCount()
+	 */
+	@Override
+	public int getMaxConcurrentConnectionsCount()
+	{
+		return this.maxConcurrentConnectionsCount;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#setMaxConcurrentConnectionsCount(int)
-     */
-    @Override
-    public void setMaxConcurrentConnectionsCount(int val) {
-        this.maxConcurrentConnectionsCount = val;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#setMaxConcurrentConnectionsCount(int)
+	 */
+	@Override
+	public void setMaxConcurrentConnectionsCount(int val)
+	{
+		this.maxConcurrentConnectionsCount = val;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#getName()
-     */
-    @Override
-    public String getName() {
-        return this.name;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#getName()
+	 */
+	@Override
+	public String getName()
+	{
+		return this.name;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#getHostAddress()
-     */
-    @Override
-    public String getHostAddress() {
-        return this.hostAddress;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#getHostAddress()
+	 */
+	@Override
+	public String getHostAddress()
+	{
+		return this.hostAddress;
+	}
 
-    public void setHostAddress(String hostAddress) {
-        this.hostAddress = hostAddress;
-    }
+	public void setHostAddress(String hostAddress)
+	{
+		this.hostAddress = hostAddress;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#getHostport()
-     */
-    @Override
-    public int getHostport() {
-        return this.hostport;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#getHostport()
+	 */
+	@Override
+	public int getHostport()
+	{
+		return this.hostport;
+	}
 
-    public void setHostport(int hostport) {
-        this.hostport = hostport;
-    }
+	public void setHostport(int hostport)
+	{
+		this.hostport = hostport;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#getExtraHostAddresses()
-     */
-    @Override
-    public String[] getExtraHostAddresses() {
-        return this.extraHostAddresses;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#getExtraHostAddresses()
+	 */
+	@Override
+	public String[] getExtraHostAddresses()
+	{
+		return this.extraHostAddresses;
+	}
 
-    public void setExtraHostAddresses(String[] extraHostAddresses) {
-        this.extraHostAddresses = extraHostAddresses;
-    }
+	public void setExtraHostAddresses(String[] extraHostAddresses)
+	{
+		this.extraHostAddresses = extraHostAddresses;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#isStarted()
-     */
-    @Override
-    public boolean isStarted() {
-        return this.started;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#isStarted()
+	 */
+	@Override
+	public boolean isStarted()
+	{
+		return this.started;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#getAssociations()
-     */
-    @Override
-    public List<String> getAssociations() {
-        return this.associations.unmodifiable();
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#getAssociations()
+	 */
+	@Override
+	public List<String> getAssociations()
+	{
+		return this.associations.unmodifiable();
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.mobicents.protocols.api.Server#getAnonymAssociations()
-     */
-    @Override
-    public List<Association> getAnonymAssociations() {
-        return this.anonymAssociations.unmodifiable();
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.mobicents.protocols.api.Server#getAnonymAssociations()
+	 */
+	@Override
+	public List<Association> getAnonymAssociations()
+	{
+		return this.anonymAssociations.unmodifiable();
+	}
 
-    protected ServerChannel getIpChannel() {
-        if (this.ipChannelType == IpChannelType.SCTP)
-            return this.serverChannelSctp;
-        else
-            return this.serverChannelTcp;
-    }
+	protected ServerChannel getIpChannel()
+	{
+		if (this.ipChannelType == IpChannelType.SCTP) {
+			return this.serverChannelSctp;
+		}
+		else {
+			return this.serverChannelTcp;
+		}
+	}
 
-    /**
-     * @param management the management to set
-     */
-    protected void setManagement(NettySctpManagementImpl management) {
-        this.management = management;
-    }
+	/**
+	 * @param management the management to set
+	 */
+	protected void setManagement(NettySctpManagementImpl management)
+	{
+		this.management = management;
+	}
 
-    protected void start() throws Exception {
-        this.initSocket();
-        this.started = true;
+	protected void start() throws Exception
+	{
+		this.initSocket();
+		this.started = true;
 
-        if (logger.isInfoEnabled()) {
-            logger.info(String.format("Started Server=%s", this.name));
-        }
-    }
+		if (logger.isInfoEnabled()) {
+			logger.info(String.format("Started Server=%s", this.name));
+		}
+	}
 
-    protected void stop() throws Exception {
-        FastList<String> tempAssociations = associations;
-        for (FastList.Node<String> n = tempAssociations.head(), end = tempAssociations.tail(); (n = n.getNext()) != end;) {
-            String assocName = n.getValue();
-            Association associationTemp = this.management.getAssociation(assocName);
-            if (associationTemp.isStarted()) {
-                throw new Exception(String.format("Stop all the associations first. Association=%s is still started",
-                        associationTemp.getName()));
-            }
-        }
+	protected void stop() throws Exception
+	{
+		FastList<String> tempAssociations = associations;
+		for (FastList.Node<String> n = tempAssociations.head(), end = tempAssociations.tail(); (n = n.getNext()) != end; ) {
+			String assocName = n.getValue();
+			Association associationTemp = this.management.getAssociation(assocName);
+			if (associationTemp.isStarted()) {
+				throw new Exception(String.format("Stop all the associations first. Association=%s is still started",
+												  associationTemp.getName()));
+			}
+		}
 
-        synchronized (this.anonymAssociations) {
-            // stopping all anonymous associations
-            for (Association ass : this.anonymAssociations) {
-                ass.stopAnonymousAssociation();
-            }
-            this.anonymAssociations.clear();
-        }
+		synchronized (this.anonymAssociations) {
+			// stopping all anonymous associations
+			for (Association ass : this.anonymAssociations) {
+				ass.stopAnonymousAssociation();
+			}
+			this.anonymAssociations.clear();
+		}
 
-        this.started = false;
+		this.started = false;
 
-        if (logger.isInfoEnabled()) {
-            logger.info(String.format("Stoped Server=%s", this.name));
-        }
+		if (logger.isInfoEnabled()) {
+			logger.info(String.format("Stoped Server=%s", this.name));
+		}
 
-        // Stop underlying channel and wait till its done
-        if (this.getIpChannel() != null) {
-            try {
-                this.getIpChannel().close().sync();
-            } catch (Exception e) {
-                logger.warn(String.format("Error while stopping the Server=%s", this.name), e);
-            }
-        }
-    }
+		// Stop underlying channel and wait till its done
+		if (this.getIpChannel() != null) {
+			try {
+				this.getIpChannel().close().sync();
+			}
+			catch (Exception e) {
+				logger.warn(String.format("Error while stopping the Server=%s", this.name), e);
+			}
+		}
+	}
 
-    private void initSocket() throws Exception {
-        ServerBootstrap b = new ServerBootstrap();
-        b.group(this.management.getBossGroup(), this.management.getWorkerGroup());
-        if (this.ipChannelType == IpChannelType.SCTP) {
-            b.channel(NioSctpServerChannel.class);
-            b.option(ChannelOption.SO_BACKLOG, 100);
-            b.childHandler(new NettySctpServerChannelInitializer(this, this.management));
-            this.applySctpOptions(b);
-        } else {
-            b.channel(NioServerSocketChannel.class);
-            b.option(ChannelOption.SO_BACKLOG, 100);
-            b.childHandler(new NettyTcpServerChannelInitializer(this, this.management));
-        }
-        b.handler(new LoggingHandler(LogLevel.INFO));
+	private void initSocket() throws Exception
+	{
+		ServerBootstrap b = new ServerBootstrap();
+		b.group(this.management.getBossGroup(), this.management.getWorkerGroup());
+		if (this.ipChannelType == IpChannelType.SCTP) {
+			b.channel(NioSctpServerChannel.class);
+			b.option(ChannelOption.SO_BACKLOG, 100);
+			b.childHandler(new NettySctpServerChannelInitializer(this, this.management));
+			this.applySctpOptions(b);
+		}
+		else {
+			b.channel(NioServerSocketChannel.class);
+			b.option(ChannelOption.SO_BACKLOG, 100);
+			b.childHandler(new NettyTcpServerChannelInitializer(this, this.management));
+		}
+		b.handler(new LoggingHandler(LogLevel.INFO));
 
-        InetSocketAddress localAddress = new InetSocketAddress(this.hostAddress, this.hostport);
+		InetSocketAddress localAddress = new InetSocketAddress(this.hostAddress, this.hostport);
 
-        // Bind the server to primary address.
-        ChannelFuture channelFuture = b.bind(localAddress).sync();
+		// Bind the server to primary address.
+		ChannelFuture channelFuture = b.bind(localAddress).sync();
 
-        // Get the underlying sctp channel
-        if (this.ipChannelType == IpChannelType.SCTP) {
-            this.serverChannelSctp = (SctpServerChannel) channelFuture.channel();
+		// Get the underlying sctp channel
+		if (this.ipChannelType == IpChannelType.SCTP) {
+			this.serverChannelSctp = (SctpServerChannel) channelFuture.channel();
 
-            // Bind the secondary address.
-            // Please note that, bindAddress in the client channel should be done before connecting if you have not
-            // enable Dynamic Address Configuration. See net.sctp.addip_enable kernel param
-            if (this.extraHostAddresses != null) {
-                for (int count = 0; count < this.extraHostAddresses.length; count++) {
-                    String localSecondaryAddress = this.extraHostAddresses[count];
-                    InetAddress localSecondaryInetAddress = InetAddress.getByName(localSecondaryAddress);
+			// Bind the secondary address.
+			// Please note that, bindAddress in the client channel should be done before connecting if you have not
+			// enable Dynamic Address Configuration. See net.sctp.addip_enable kernel param
+			if (this.extraHostAddresses != null) {
+				for (int count = 0; count < this.extraHostAddresses.length; count++) {
+					String localSecondaryAddress = this.extraHostAddresses[count];
+					InetAddress localSecondaryInetAddress = InetAddress.getByName(localSecondaryAddress);
 
-                    channelFuture = this.serverChannelSctp.bindAddress(localSecondaryInetAddress).sync();
-                }
-            }
+					channelFuture = this.serverChannelSctp.bindAddress(localSecondaryInetAddress).sync();
+				}
+			}
 
-            if (logger.isInfoEnabled()) {
-                logger.info(String.format("SctpServerChannel bound to=%s ", this.serverChannelSctp.allLocalAddresses()));
-            }
-        } else {
-            this.serverChannelTcp = (NioServerSocketChannel) channelFuture.channel();
+			if (logger.isInfoEnabled()) {
+				logger.info(String.format("SctpServerChannel bound to=%s ", this.serverChannelSctp.allLocalAddresses()));
+			}
+		}
+		else {
+			this.serverChannelTcp = (NioServerSocketChannel) channelFuture.channel();
 
-            if (logger.isInfoEnabled()) {
-                logger.info(String.format("ServerSocketChannel bound to=%s ", this.serverChannelTcp.localAddress()));
-            }
-        }
-    }
+			if (logger.isInfoEnabled()) {
+				logger.info(String.format("ServerSocketChannel bound to=%s ", this.serverChannelTcp.localAddress()));
+			}
+		}
+	}
 
-    private void applySctpOptions(ServerBootstrap b) {
-        b.childOption(SctpChannelOption.SCTP_NODELAY, this.management.getOptionSctpNodelay());
-        b.childOption(SctpChannelOption.SCTP_DISABLE_FRAGMENTS, this.management.getOptionSctpDisableFragments());
-        b.childOption(SctpChannelOption.SCTP_FRAGMENT_INTERLEAVE, this.management.getOptionSctpFragmentInterleave());
-        b.childOption(SctpChannelOption.SCTP_INIT_MAXSTREAMS, this.management.getOptionSctpInitMaxstreams());
-        b.childOption(SctpChannelOption.SO_SNDBUF, this.management.getOptionSoSndbuf());
-        b.childOption(SctpChannelOption.SO_RCVBUF, this.management.getOptionSoRcvbuf());
-        b.childOption(SctpChannelOption.SO_LINGER, this.management.getOptionSoLinger());
-    }
+	private void applySctpOptions(ServerBootstrap b)
+	{
+		b.childOption(SctpChannelOption.SCTP_NODELAY, this.management.getOptionSctpNodelay());
+		b.childOption(SctpChannelOption.SCTP_DISABLE_FRAGMENTS, this.management.getOptionSctpDisableFragments());
+		b.childOption(SctpChannelOption.SCTP_FRAGMENT_INTERLEAVE, this.management.getOptionSctpFragmentInterleave());
+		b.childOption(SctpChannelOption.SCTP_INIT_MAXSTREAMS, this.management.getOptionSctpInitMaxstreams());
+		b.childOption(SctpChannelOption.SO_SNDBUF, this.management.getOptionSoSndbuf());
+		b.childOption(SctpChannelOption.SO_RCVBUF, this.management.getOptionSoRcvbuf());
+		b.childOption(SctpChannelOption.SO_LINGER, this.management.getOptionSoLinger());
+	}
 
-    @Override
-    public String toString() {
+	@Override
+	public String toString()
+	{
 
-        StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder();
 
-        sb.append("Server [name=").append(this.name).append(", started=").append(this.started).append(", hostAddress=").append(this.hostAddress)
-                .append(", hostPort=").append(hostport).append(", ipChannelType=").append(ipChannelType).append(", acceptAnonymousConnections=")
-                .append(this.acceptAnonymousConnections).append(", maxConcurrentConnectionsCount=").append(this.maxConcurrentConnectionsCount)
-                .append(", associations(anonymous does not included)=[");
+		sb.append("Server [name=").append(this.name).append(", started=").append(this.started).append(", hostAddress=").append(this.hostAddress)
+		  .append(", hostPort=").append(hostport).append(", ipChannelType=").append(ipChannelType).append(", acceptAnonymousConnections=")
+		  .append(this.acceptAnonymousConnections).append(", maxConcurrentConnectionsCount=").append(this.maxConcurrentConnectionsCount)
+		  .append(", associations(anonymous does not included)=[");
 
-        for (FastList.Node<String> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end;) {
-            sb.append(n.getValue());
-            sb.append(", ");
-        }
+		for (FastList.Node<String> n = this.associations.head(), end = this.associations.tail(); (n = n.getNext()) != end; ) {
+			sb.append(n.getValue());
+			sb.append(", ");
+		}
 
-        sb.append("], extraHostAddress=[");
+		sb.append("], extraHostAddress=[");
 
-        if (this.extraHostAddresses != null) {
-            for (int i = 0; i < this.extraHostAddresses.length; i++) {
-                String extraHostAddress = this.extraHostAddresses[i];
-                sb.append(extraHostAddress);
-                sb.append(", ");
-            }
-        }
+		if (this.extraHostAddresses != null) {
+			for (int i = 0; i < this.extraHostAddresses.length; i++) {
+				String extraHostAddress = this.extraHostAddresses[i];
+				sb.append(extraHostAddress);
+				sb.append(", ");
+			}
+		}
 
-        sb.append("]]");
+		sb.append("]]");
 
-        return sb.toString();
-    }
+		return sb.toString();
+	}
 
-    /**
-     * XML Serialization/Deserialization
-     */
-    protected static final XMLFormat<NettyServerImpl> SERVER_XML = new XMLFormat<NettyServerImpl>(NettyServerImpl.class) {
+	/**
+	 * XML Serialization/Deserialization
+	 */
+	protected static final XMLFormat<NettyServerImpl> SERVER_XML = new XMLFormat<NettyServerImpl>(NettyServerImpl.class)
+	{
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public void read(javolution.xml.XMLFormat.InputElement xml, NettyServerImpl server) throws XMLStreamException {
-            server.name = xml.getAttribute(NAME, "");
-            server.started = xml.getAttribute(STARTED, false);
-            server.hostAddress = xml.getAttribute(HOST_ADDRESS, "");
-            server.hostport = xml.getAttribute(HOST_PORT, 0);
-            server.ipChannelType = IpChannelType.getInstance(xml.getAttribute(IPCHANNEL_TYPE, IpChannelType.SCTP.getCode()));
-            if (server.ipChannelType == null)
-                throw new XMLStreamException("Bad value for server.ipChannelType");
+		@SuppressWarnings("unchecked")
+		@Override
+		public void read(javolution.xml.XMLFormat.InputElement xml, NettyServerImpl server) throws XMLStreamException
+		{
+			server.name = xml.getAttribute(NAME, "");
+			server.started = xml.getAttribute(STARTED, false);
+			server.hostAddress = xml.getAttribute(HOST_ADDRESS, "");
+			server.hostport = xml.getAttribute(HOST_PORT, 0);
+			server.ipChannelType = IpChannelType.getInstance(xml.getAttribute(IPCHANNEL_TYPE, IpChannelType.SCTP.getCode()));
+			if (server.ipChannelType == null) {
+				throw new XMLStreamException("Bad value for server.ipChannelType");
+			}
 
-            server.acceptAnonymousConnections = xml.getAttribute(ACCEPT_ANONYMOUS_CONNECTIONS, false);
-            server.maxConcurrentConnectionsCount = xml.getAttribute(MAX_CONCURRENT_CONNECTIONS_COUNT, 0);
+			server.acceptAnonymousConnections = xml.getAttribute(ACCEPT_ANONYMOUS_CONNECTIONS, false);
+			server.maxConcurrentConnectionsCount = xml.getAttribute(MAX_CONCURRENT_CONNECTIONS_COUNT, 0);
 
-            int extraHostAddressesSize = xml.getAttribute(EXTRA_HOST_ADDRESS_SIZE, 0);
-            server.extraHostAddresses = new String[extraHostAddressesSize];
+			int extraHostAddressesSize = xml.getAttribute(EXTRA_HOST_ADDRESS_SIZE, 0);
+			server.extraHostAddresses = new String[extraHostAddressesSize];
 
-            for (int i = 0; i < extraHostAddressesSize; i++) {
-                server.extraHostAddresses[i] = xml.get(EXTRA_HOST_ADDRESS, String.class);
-            }
+			for (int i = 0; i < extraHostAddressesSize; i++) {
+				server.extraHostAddresses[i] = xml.get(EXTRA_HOST_ADDRESS, String.class);
+			}
 
-            server.associations = xml.get(ASSOCIATIONS, FastList.class);
-        }
+			server.associations = xml.get(ASSOCIATIONS, FastList.class);
+		}
 
-        @Override
-        public void write(NettyServerImpl server, javolution.xml.XMLFormat.OutputElement xml) throws XMLStreamException {
-            xml.setAttribute(NAME, server.name);
-            xml.setAttribute(STARTED, server.started);
-            xml.setAttribute(HOST_ADDRESS, server.hostAddress);
-            xml.setAttribute(HOST_PORT, server.hostport);
-            xml.setAttribute(IPCHANNEL_TYPE, server.ipChannelType.getCode());
-            xml.setAttribute(ACCEPT_ANONYMOUS_CONNECTIONS, server.acceptAnonymousConnections);
-            xml.setAttribute(MAX_CONCURRENT_CONNECTIONS_COUNT, server.maxConcurrentConnectionsCount);
+		@Override
+		public void write(NettyServerImpl server, javolution.xml.XMLFormat.OutputElement xml) throws XMLStreamException
+		{
+			xml.setAttribute(NAME, server.name);
+			xml.setAttribute(STARTED, server.started);
+			xml.setAttribute(HOST_ADDRESS, server.hostAddress);
+			xml.setAttribute(HOST_PORT, server.hostport);
+			xml.setAttribute(IPCHANNEL_TYPE, server.ipChannelType.getCode());
+			xml.setAttribute(ACCEPT_ANONYMOUS_CONNECTIONS, server.acceptAnonymousConnections);
+			xml.setAttribute(MAX_CONCURRENT_CONNECTIONS_COUNT, server.maxConcurrentConnectionsCount);
 
-            xml.setAttribute(EXTRA_HOST_ADDRESS_SIZE, server.extraHostAddresses != null ? server.extraHostAddresses.length : 0);
-            if (server.extraHostAddresses != null) {
-                for (String s : server.extraHostAddresses) {
-                    xml.add(s, EXTRA_HOST_ADDRESS, String.class);
-                }
-            }
-            xml.add(server.associations, ASSOCIATIONS, FastList.class);
-        }
-    };
+			xml.setAttribute(EXTRA_HOST_ADDRESS_SIZE, server.extraHostAddresses != null ? server.extraHostAddresses.length : 0);
+			if (server.extraHostAddresses != null) {
+				for (String s : server.extraHostAddresses) {
+					xml.add(s, EXTRA_HOST_ADDRESS, String.class);
+				}
+			}
+			xml.add(server.associations, ASSOCIATIONS, FastList.class);
+		}
+	};
 }

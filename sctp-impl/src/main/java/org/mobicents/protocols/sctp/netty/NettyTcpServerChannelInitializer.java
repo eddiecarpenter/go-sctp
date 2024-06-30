@@ -26,20 +26,23 @@ import io.netty.channel.socket.SocketChannel;
 /**
  * @author <a href="mailto:amit.bhayani@telestax.com">Amit Bhayani</a>
  * @author Sergey Vetyutnev</a>
- * 
  */
-public class NettyTcpServerChannelInitializer extends ChannelInitializer<SocketChannel> {
-    private final NettyServerImpl nettyServerImpl;
-    private final NettySctpManagementImpl sctpManagementImpl;
+@SuppressWarnings("all")//3rd party lib
+public class NettyTcpServerChannelInitializer extends ChannelInitializer<SocketChannel>
+{
+	private final NettyServerImpl nettyServerImpl;
+	private final NettySctpManagementImpl sctpManagementImpl;
 
-    protected NettyTcpServerChannelInitializer(NettyServerImpl nettyServerImpl, NettySctpManagementImpl sctpManagementImpl) {
-        super();
-        this.nettyServerImpl = nettyServerImpl;
-        this.sctpManagementImpl = sctpManagementImpl;
-    }
+	protected NettyTcpServerChannelInitializer(NettyServerImpl nettyServerImpl, NettySctpManagementImpl sctpManagementImpl)
+	{
+		super();
+		this.nettyServerImpl = nettyServerImpl;
+		this.sctpManagementImpl = sctpManagementImpl;
+	}
 
-    @Override
-    protected void initChannel(SocketChannel ch) throws Exception {
-        ch.pipeline().addLast(new NettySctpServerHandler(this.nettyServerImpl, this.sctpManagementImpl));
-    }
+	@Override
+	protected void initChannel(SocketChannel ch) throws Exception
+	{
+		ch.pipeline().addLast(new NettySctpServerHandler(this.nettyServerImpl, this.sctpManagementImpl));
+	}
 }

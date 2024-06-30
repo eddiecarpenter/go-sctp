@@ -26,24 +26,27 @@ import io.netty.channel.socket.SocketChannel;
 /**
  * @author <a href="mailto:amit.bhayani@telestax.com">Amit Bhayani</a>
  * @author Sergey Vetyutnev</a>
- * 
  */
-public class NettyTcpClientChannelInitializer extends ChannelInitializer<SocketChannel> {
+@SuppressWarnings("all")//3rd party lib
+public class NettyTcpClientChannelInitializer extends ChannelInitializer<SocketChannel>
+{
 
-    private final NettyAssociationImpl nettyAssociationImpl;
+	private final NettyAssociationImpl nettyAssociationImpl;
 
-    /**
-     * @param nettyAssociationImpl
-     */
-    public NettyTcpClientChannelInitializer(NettyAssociationImpl nettyAssociationImpl) {
-        super();
-        this.nettyAssociationImpl = nettyAssociationImpl;
-    }
+	/**
+	 * @param nettyAssociationImpl
+	 */
+	public NettyTcpClientChannelInitializer(NettyAssociationImpl nettyAssociationImpl)
+	{
+		super();
+		this.nettyAssociationImpl = nettyAssociationImpl;
+	}
 
-    @Override
-    protected void initChannel(SocketChannel ch) throws Exception {
-        ch.pipeline().addLast(new NettySctpClientHandler(this.nettyAssociationImpl));
+	@Override
+	protected void initChannel(SocketChannel ch) throws Exception
+	{
+		ch.pipeline().addLast(new NettySctpClientHandler(this.nettyAssociationImpl));
 
-    }
+	}
 
 }

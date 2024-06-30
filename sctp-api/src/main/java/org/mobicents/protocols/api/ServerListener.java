@@ -23,11 +23,11 @@
 package org.mobicents.protocols.api;
 
 /**
- *
  * @author sergey vetyutnev
- * 
  */
-public interface ServerListener {
+@SuppressWarnings("all")//3rd party lib
+public interface ServerListener
+{
 
 	public void onNewRemoteConnection(Server server, Association association);
 

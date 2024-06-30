@@ -4,40 +4,43 @@
  * contributors as indicated by the @authors tag. All rights reserved.
  * See the copyright.txt in the distribution for a full listing
  * of individual contributors.
- * 
+ *
  * This copyrighted material is made available to anyone wishing to use,
  * modify, copy, or redistribute it subject to the terms and conditions
  * of the GNU General Public License, v. 2.0.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License,
- * v. 2.0 along with this distribution; if not, write to the Free 
+ * v. 2.0 along with this distribution; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  */
 package org.mobicents.protocols.sctp;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import io.netty.buffer.Unpooled;
-
-import java.util.Arrays;
-
 import org.mobicents.protocols.api.Association;
 import org.mobicents.protocols.api.AssociationListener;
 import org.mobicents.protocols.api.IpChannelType;
 import org.mobicents.protocols.api.PayloadData;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.Arrays;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author amit bhayani
- * 
  */
-public class ClientAssociationTest {
+@SuppressWarnings("all")//3rd party lib
+public class ClientAssociationTest
+{
 
 	private static final String SERVER_NAME = "testserver";
 	private static final String SERVER_HOST = "127.0.0.1";
@@ -70,14 +73,17 @@ public class ClientAssociationTest {
 	private byte[] serverMessage;
 
 	@BeforeClass
-	public static void setUpClass() throws Exception {
+	public static void setUpClass() throws Exception
+	{
 	}
 
 	@AfterClass
-	public static void tearDownClass() throws Exception {
+	public static void tearDownClass() throws Exception
+	{
 	}
 
-	public void setUp(IpChannelType ipChannelType) throws Exception {
+	public void setUp(IpChannelType ipChannelType) throws Exception
+	{
 		this.clientAssocUp = false;
 		this.serverAssocUp = false;
 
@@ -90,7 +96,7 @@ public class ClientAssociationTest {
 		this.management = new ManagementImpl("ClientAssociationTest");
 		this.management.setSingleThread(true);
 		this.management.start();
-        this.management.setConnectDelay(10000);// Try connecting every 10 secs
+		this.management.setConnectDelay(10000);// Try connecting every 10 secs
 		this.management.removeAllResourses();
 
 		this.server = this.management.addServer(SERVER_NAME, SERVER_HOST, SERVER_PORT, ipChannelType, false, 0, null);
@@ -98,7 +104,8 @@ public class ClientAssociationTest {
 		this.clientAssociation = this.management.addAssociation(CLIENT_HOST, CLIENT_PORT, SERVER_HOST, SERVER_PORT, CLIENT_ASSOCIATION_NAME, ipChannelType, null);
 	}
 
-	public void tearDown() throws Exception {
+	public void tearDown() throws Exception
+	{
 		this.management.removeAssociation(CLIENT_ASSOCIATION_NAME);
 		this.management.removeAssociation(SERVER_ASSOCIATION_NAME);
 		this.management.removeServer(SERVER_NAME);
@@ -107,36 +114,40 @@ public class ClientAssociationTest {
 	}
 
 	/**
-	 * In this test client association is started without server being started.
-	 * Client keeps attempting to connect to server, till server comes up
-	 * 
+	 * In this test client association is started without server being started. Client keeps attempting to connect to
+	 * server, till server comes up
+	 *
 	 * @throws Exception
 	 */
-	@Test(groups = { "functional", "sctp" })
-	public void testConnectAttemptsSctp() throws Exception {
-		
-		if (SctpTransferTest.checkSctpEnabled())
+	@Test(groups = {"functional", "sctp"})
+	public void testConnectAttemptsSctp() throws Exception
+	{
+
+		if (SctpTransferTest.checkSctpEnabled()) {
 			this.testConnectAttemptsByProtoclol(IpChannelType.SCTP);
+		}
 	}
 
 	/**
-	 * In this test client association is started without server being started.
-	 * Client keeps attempting to connect to server, till server comes up
-	 * 
+	 * In this test client association is started without server being started. Client keeps attempting to connect to
+	 * server, till server comes up
+	 *
 	 * @throws Exception
 	 */
-	@Test(groups = { "functional", "tcp" })
-	public void testConnectAttemptsTcp() throws Exception {
+	@Test(groups = {"functional", "tcp"})
+	public void testConnectAttemptsTcp() throws Exception
+	{
 
 		this.testConnectAttemptsByProtoclol(IpChannelType.TCP);
 	}
 
-	private void testConnectAttemptsByProtoclol(IpChannelType ipChannelType) throws Exception {
+	private void testConnectAttemptsByProtoclol(IpChannelType ipChannelType) throws Exception
+	{
 
-//		BasicConfigurator.configure();
-//		Logger logger = Logger.getLogger(ServerImpl.class.getName());
-//		logger.setLevel(Level.ALL);
-		
+		//		BasicConfigurator.configure();
+		//		Logger logger = Logger.getLogger(ServerImpl.class.getName());
+		//		logger.setLevel(Level.ALL);
+
 		this.setUp(ipChannelType);
 
 		this.serverAssociation.setAssociationListener(new ServerAssociationListener());
@@ -173,21 +184,23 @@ public class ClientAssociationTest {
 		assertTrue(serverAssocDown);
 
 		Runtime runtime = Runtime.getRuntime();
-		
+
 		this.tearDown();
 	}
 
-	private class ClientAssociationListenerImpl implements AssociationListener {
+	private class ClientAssociationListenerImpl implements AssociationListener
+	{
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationUp
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationUp(Association association, int maxInboundStreams, int maxOutboundStreams) {
+		public void onCommunicationUp(Association association, int maxInboundStreams, int maxOutboundStreams)
+		{
 			System.out.println(this + " onCommunicationUp");
 
 			clientAssocUp = true;
@@ -196,58 +209,63 @@ public class ClientAssociationTest {
 
 			try {
 				association.send(payloadData);
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationShutdown
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationShutdown(Association association) {
+		public void onCommunicationShutdown(Association association)
+		{
 			System.out.println(this + " onCommunicationShutdown");
 			clientAssocDown = true;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationLost
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationLost(Association association) {
+		public void onCommunicationLost(Association association)
+		{
 			System.out.println(this + " onCommunicationLost");
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationRestart
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationRestart(Association association) {
+		public void onCommunicationRestart(Association association)
+		{
 			System.out.println(this + " onCommunicationRestart");
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onPayload(org.mobicents
 		 * .protocols.sctp.Association,
 		 * org.mobicents.protocols.sctp.PayloadData)
 		 */
 		@Override
-		public void onPayload(Association association, PayloadData payloadData) {
+		public void onPayload(Association association, PayloadData payloadData)
+		{
 			System.out.println(this + " onPayload");
 
 			clientMessage = new byte[payloadData.getDataLength()];
@@ -261,24 +279,27 @@ public class ClientAssociationTest {
 		 * @see org.mobicents.protocols.api.AssociationListener#inValidStreamId(org.mobicents.protocols.api.PayloadData)
 		 */
 		@Override
-		public void inValidStreamId(PayloadData payloadData) {
+		public void inValidStreamId(PayloadData payloadData)
+		{
 			// TODO Auto-generated method stub
-			
+
 		}
 
 	}
 
-	private class ServerAssociationListener implements AssociationListener {
+	private class ServerAssociationListener implements AssociationListener
+	{
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationUp
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationUp(Association association, int maxInboundStreams, int maxOutboundStreams) {
+		public void onCommunicationUp(Association association, int maxInboundStreams, int maxOutboundStreams)
+		{
 			System.out.println(this + " onCommunicationUp");
 
 			serverAssocUp = true;
@@ -287,58 +308,63 @@ public class ClientAssociationTest {
 
 			try {
 				association.send(payloadData);
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationShutdown
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationShutdown(Association association) {
+		public void onCommunicationShutdown(Association association)
+		{
 			System.out.println(this + " onCommunicationShutdown");
 			serverAssocDown = true;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationLost
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationLost(Association association) {
+		public void onCommunicationLost(Association association)
+		{
 			System.out.println(this + " onCommunicationLost");
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationRestart
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationRestart(Association association) {
+		public void onCommunicationRestart(Association association)
+		{
 			System.out.println(this + " onCommunicationRestart");
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onPayload(org.mobicents
 		 * .protocols.sctp.Association,
 		 * org.mobicents.protocols.sctp.PayloadData)
 		 */
 		@Override
-		public void onPayload(Association association, PayloadData payloadData) {
+		public void onPayload(Association association, PayloadData payloadData)
+		{
 			System.out.println(this + " onPayload");
 
 			serverMessage = new byte[payloadData.getDataLength()];
@@ -351,9 +377,10 @@ public class ClientAssociationTest {
 		 * @see org.mobicents.protocols.api.AssociationListener#inValidStreamId(org.mobicents.protocols.api.PayloadData)
 		 */
 		@Override
-		public void inValidStreamId(PayloadData payloadData) {
+		public void inValidStreamId(PayloadData payloadData)
+		{
 			// TODO Auto-generated method stub
-			
+
 		}
 
 	}

@@ -20,11 +20,8 @@
 
 package org.mobicents.protocols.sctp.multihome;
 
-import static org.junit.Assert.assertTrue;
 import io.netty.buffer.Unpooled;
 import javolution.util.FastList;
-
-import org.apache.log4j.Logger;
 import org.mobicents.protocols.api.Association;
 import org.mobicents.protocols.api.AssociationListener;
 import org.mobicents.protocols.api.IpChannelType;
@@ -33,27 +30,32 @@ import org.mobicents.protocols.sctp.AssociationImpl;
 import org.mobicents.protocols.sctp.ManagementImpl;
 import org.mobicents.protocols.sctp.SctpTransferTest;
 import org.mobicents.protocols.sctp.ServerImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * <p>
- * This test is for SCTP Multihoming. Make sure you change SERVER_HOST1 and
- * CLIENT_HOST1 to match your current ip before you run this test.
+ * This test is for SCTP Multihoming. Make sure you change SERVER_HOST1 and CLIENT_HOST1 to match your current ip before
+ * you run this test.
  * <p>
  * <p>
- * Once this test is started you can randomly bring down loop back interface or
- * real interafce and see that traffic still continues.
+ * Once this test is started you can randomly bring down loop back interface or real interafce and see that traffic
+ * still continues.
  * </p>
  * <p>
  * This is not automated test. Please don't add in automation.
  * </p>
- * 
+ *
  * @author amit bhayani
- * 
  */
-public class SctpMultiHomeTransferTest {
+@SuppressWarnings("all")//3rd party lib
+public class SctpMultiHomeTransferTest
+{
 	private static final String SERVER_NAME = "testserver";
 	private static final String SERVER_HOST = "127.0.0.1";
 	private static final String SERVER_HOST1 = "10.2.50.194";
@@ -89,14 +91,17 @@ public class SctpMultiHomeTransferTest {
 	private FastList<String> serverMessage = null;
 
 	@BeforeClass
-	public static void setUpClass() throws Exception {
+	public static void setUpClass() throws Exception
+	{
 	}
 
 	@AfterClass
-	public static void tearDownClass() throws Exception {
+	public static void tearDownClass() throws Exception
+	{
 	}
 
-	public void setUp(IpChannelType ipChannelType) throws Exception {
+	public void setUp(IpChannelType ipChannelType) throws Exception
+	{
 		this.clientAssocUp = false;
 		this.serverAssocUp = false;
 
@@ -109,16 +114,17 @@ public class SctpMultiHomeTransferTest {
 		this.management = new ManagementImpl("server-management");
 		this.management.setSingleThread(true);
 		this.management.start();
-        this.management.setConnectDelay(10000);// Try connecting every 10 secs
+		this.management.setConnectDelay(10000);// Try connecting every 10 secs
 		this.management.removeAllResourses();
 
-		this.server = this.management.addServer(SERVER_NAME, SERVER_HOST, SERVER_PORT, ipChannelType, false, 0, new String[] { SERVER_HOST1 });
+		this.server = this.management.addServer(SERVER_NAME, SERVER_HOST, SERVER_PORT, ipChannelType, false, 0, new String[]{SERVER_HOST1});
 		this.serverAssociation = this.management.addServerAssociation(CLIENT_HOST, CLIENT_PORT, SERVER_NAME, SERVER_ASSOCIATION_NAME, ipChannelType);
 		this.clientAssociation = this.management.addAssociation(CLIENT_HOST, CLIENT_PORT, SERVER_HOST, SERVER_PORT, CLIENT_ASSOCIATION_NAME, ipChannelType,
-				new String[] { CLIENT_HOST1 });
+																new String[]{CLIENT_HOST1});
 	}
 
-	public void tearDown() throws Exception {
+	public void tearDown() throws Exception
+	{
 
 		this.management.removeAssociation(CLIENT_ASSOCIATION_NAME);
 		this.management.removeAssociation(SERVER_ASSOCIATION_NAME);
@@ -128,16 +134,18 @@ public class SctpMultiHomeTransferTest {
 	}
 
 	/**
-	 * Simple test that creates Client and Server Association, exchanges data
-	 * and brings down association. Finally removes the Associations and Server
+	 * Simple test that creates Client and Server Association, exchanges data and brings down association. Finally
+	 * removes the Associations and Server
 	 */
-	@Test(groups = { "functional", "sctp-multihome" })
-	public void testDataTransferSctp() throws Exception {
+	@Test(groups = {"functional", "sctp-multihome"})
+	public void testDataTransferSctp() throws Exception
+	{
 
 		// Testing only is sctp is enabled
-		if (!SctpTransferTest.checkSctpEnabled())
+		if (!SctpTransferTest.checkSctpEnabled()) {
 			return;
-		
+		}
+
 		this.setUp(IpChannelType.SCTP);
 
 		this.management.startServer(SERVER_NAME);
@@ -149,8 +157,9 @@ public class SctpMultiHomeTransferTest {
 		this.management.startAssociation(CLIENT_ASSOCIATION_NAME);
 
 		for (int i1 = 0; i1 < 40; i1++) {
-			if (serverAssocUp)
+			if (serverAssocUp) {
 				break;
+			}
 			Thread.sleep(1000 * 5); // was: 40
 		}
 		Thread.sleep(1000 * 15000); // was: 40
@@ -178,20 +187,22 @@ public class SctpMultiHomeTransferTest {
 		this.tearDown();
 	}
 
-	private class ClientAssociationListener implements AssociationListener {
-		private final Logger logger = Logger.getLogger(ClientAssociationListener.class);
-		
+	private class ClientAssociationListener implements AssociationListener
+	{
+		private final Logger logger = LoggerFactory.getLogger(ClientAssociationListener.class);
+
 		private LoadGenerator loadGenerator = null;
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationUp
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationUp(Association association, int maxInboundStreams, int maxOutboundStreams) {
+		public void onCommunicationUp(Association association, int maxInboundStreams, int maxOutboundStreams)
+		{
 			logger.info(" onCommunicationUp");
 
 			clientAssocUp = true;
@@ -202,53 +213,57 @@ public class SctpMultiHomeTransferTest {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationShutdown
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationShutdown(Association association) {
-			logger.warn( " onCommunicationShutdown");
+		public void onCommunicationShutdown(Association association)
+		{
+			logger.warn(" onCommunicationShutdown");
 			clientAssocDown = true;
 			loadGenerator.stop();
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationLost
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationLost(Association association) {
+		public void onCommunicationLost(Association association)
+		{
 			logger.warn(" onCommunicationLost");
 			loadGenerator.stop();
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationRestart
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationRestart(Association association) {
+		public void onCommunicationRestart(Association association)
+		{
 			logger.warn(" onCommunicationRestart");
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onPayload(org.mobicents
 		 * .protocols.sctp.Association,
 		 * org.mobicents.protocols.sctp.PayloadData)
 		 */
 		@Override
-		public void onPayload(Association association, PayloadData payloadData) {
+		public void onPayload(Association association, PayloadData payloadData)
+		{
 			byte[] data = new byte[payloadData.getDataLength()];
 			payloadData.getByteBuf().readBytes(data);
 			String rxMssg = new String(data);
@@ -261,47 +276,54 @@ public class SctpMultiHomeTransferTest {
 		 * @see org.mobicents.protocols.api.AssociationListener#inValidStreamId(org.mobicents.protocols.api.PayloadData)
 		 */
 		@Override
-		public void inValidStreamId(PayloadData payloadData) {
+		public void inValidStreamId(PayloadData payloadData)
+		{
 			// TODO Auto-generated method stub
-			
+
 		}
 
 	}
 
-	private class LoadGenerator implements Runnable {
+	private class LoadGenerator implements Runnable
+	{
 
 		private String message = null;
 		private Association association;
 		private volatile boolean started = true;
 
-		LoadGenerator(Association association, String message) {
+		LoadGenerator(Association association, String message)
+		{
 			this.association = association;
 			this.message = message;
 		}
 
-		void stop() {
+		void stop()
+		{
 			this.started = false;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see java.lang.Runnable#run()
 		 */
 		@Override
-		public void run() {
+		public void run()
+		{
 			for (int i = 0; i < 10000 && started; i++) {
 				byte[] data = (this.message + i).getBytes();
 				PayloadData payloadData = new PayloadData(data.length, Unpooled.copiedBuffer(data), true, false, 3, 1);
 
 				try {
 					this.association.send(payloadData);
-				} catch (Exception e) {
+				}
+				catch (Exception e) {
 					e.printStackTrace();
 				}
 				try {
 					Thread.sleep(1000);
-				} catch (InterruptedException e) {
+				}
+				catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
@@ -309,19 +331,21 @@ public class SctpMultiHomeTransferTest {
 
 	}
 
-	private class ServerAssociationListener implements AssociationListener {
-		private final Logger logger = Logger.getLogger(ServerAssociationListener.class);
+	private class ServerAssociationListener implements AssociationListener
+	{
+		private final Logger logger = LoggerFactory.getLogger(ServerAssociationListener.class);
 		private LoadGenerator loadGenerator = null;
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationUp
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationUp(Association association, int maxInboundStreams, int maxOutboundStreams) {
+		public void onCommunicationUp(Association association, int maxInboundStreams, int maxOutboundStreams)
+		{
 			logger.info(" onCommunicationUp");
 
 			serverAssocUp = true;
@@ -332,13 +356,14 @@ public class SctpMultiHomeTransferTest {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationShutdown
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationShutdown(Association association) {
+		public void onCommunicationShutdown(Association association)
+		{
 			logger.warn(" onCommunicationShutdown");
 			serverAssocDown = true;
 			loadGenerator.stop();
@@ -346,39 +371,42 @@ public class SctpMultiHomeTransferTest {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationLost
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationLost(Association association) {
+		public void onCommunicationLost(Association association)
+		{
 			logger.warn(" onCommunicationLost");
 			loadGenerator.stop();
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onCommunicationRestart
 		 * (org.mobicents.protocols.sctp.Association)
 		 */
 		@Override
-		public void onCommunicationRestart(Association association) {
+		public void onCommunicationRestart(Association association)
+		{
 			logger.warn(" onCommunicationRestart");
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * org.mobicents.protocols.sctp.AssociationListener#onPayload(org.mobicents
 		 * .protocols.sctp.Association,
 		 * org.mobicents.protocols.sctp.PayloadData)
 		 */
 		@Override
-		public void onPayload(Association association, PayloadData payloadData) {
+		public void onPayload(Association association, PayloadData payloadData)
+		{
 			byte[] data = new byte[payloadData.getDataLength()];
 			payloadData.getByteBuf().readBytes(data);
 			String rxMssg = new String(data);
@@ -390,9 +418,10 @@ public class SctpMultiHomeTransferTest {
 		 * @see org.mobicents.protocols.api.AssociationListener#inValidStreamId(org.mobicents.protocols.api.PayloadData)
 		 */
 		@Override
-		public void inValidStreamId(PayloadData payloadData) {
+		public void inValidStreamId(PayloadData payloadData)
+		{
 			// TODO Auto-generated method stub
-			
+
 		}
 
 	}
